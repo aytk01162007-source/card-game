@@ -2,11 +2,47 @@
 <html>
 <head>
   <title>カードゲーム</title>
+  <style>
+    body {
+      text-align: center;
+      background: #222;
+      color: white;
+    }
+    .card {
+      display: inline-block;
+      width: 60px;
+      height: 90px;
+      border: 1px solid white;
+      margin: 5px;
+      line-height: 90px;
+    }
+  </style>
 </head>
 <body>
 
-  <h1>自作カードゲーム</h1>
-  <p>サイト完成！</p>
+<h1>カードゲーム</h1>
+
+<button onclick="drawCard()">カードを引く</button>
+
+<div id="hand"></div>
+
+<script>
+let hand = [];
+
+function drawCard() {
+  let num = Math.floor(Math.random() * 10) + 1;
+  hand.push(num);
+  showHand();
+}
+
+function showHand() {
+  let html = "";
+  hand.forEach(c => {
+    html += `<div class="card">${c}</div>`;
+  });
+  document.getElementById("hand").innerHTML = html;
+}
+</script>
 
 </body>
 </html>
