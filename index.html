@@ -4,16 +4,32 @@
   <title>カードゲーム</title>
   <style>
     body {
-      text-align: center;
+      margin: 0;
+      font-family: sans-serif;
       background: #222;
       color: white;
-      font-family: sans-serif;
+      text-align: center;
+    }
+
+    /* メニュー */
+    #menu {
+      position: fixed;
+      top: 10px;
+      right: 10px;
     }
 
     button {
-      padding: 10px 20px;
-      font-size: 16px;
-      margin: 10px;
+      margin: 5px;
+      padding: 8px 12px;
+    }
+
+    .screen {
+      display: none;
+      padding-top: 60px;
+    }
+
+    .active {
+      display: block;
     }
 
     .card {
@@ -26,79 +42,135 @@
       line-height: 90px;
       font-size: 20px;
       background: #333;
+      cursor: pointer;
+    }
+
+    .selected {
+      border: 2px solid yellow;
     }
   </style>
 </head>
 <body>
 
-<h1>カードバトル</h1>
+<!-- メニュー -->
+<div id="menu">
+  <button onclick="showScreen('draw')">カードを引く</button>
+  <button onclick="showScreen('stock')">ストック</button>
+  <button onclick="showScreen('battle')">対戦</button>
+</div>
 
-<button onclick="drawCard()">カードを引く</button>
+<!-- カードを引く -->
+<div id="draw" class="screen active">
+  <h2>カードを引く</h2>
+  <button onclick="drawCard()">引く</button>
+  <div id="drawResult"></div>
+</div>
 
-<h2>自分</h2>
-<div id="player"></div>
+<!-- ストック -->
+<div id="stock" class="screen">
+  <h2>ストック</h2>
+  <div id="stockList"></div>
+</div>
 
-<h2>BOT</h2>
-<div id="bot"></div>
+<!-- 対戦 -->
+<div id="battle" class="screen">
+  <h2>対戦（5枚選択）</h2>
+  <p>カードを5枚選んでね</p>
+  <div id="selectCards"></div>
+  <button onclick="startBattle()">決定</button>
 
-<h2 id="result"></h2>
+  <h3>自分</h3>
+  <div id="player"></div>
+
+  <h3>BOT</h3>
+  <div id="bot"></div>
+
+  <h2 id="result"></h2>
+</div>
 
 <script>
-let player = [];
-let bot = [];
-let turn = "player";
+let stock = [];
+let selected = [];
 
+// 画面切り替え
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+
+  if (id === "stock") showStock();
+  if (id === "battle") showSelect();
+}
+
+// カードを引く
 function drawCard() {
-  if (turn !== "player") return;
-
-  if (player.length >= 5) return;
-
   let num = Math.floor(Math.random() * 10) + 1;
-  player.push(num);
-  show();
+  stock.push(num);
 
-  turn = "bot";
-  setTimeout(botTurn, 1000);
+  document.getElementById("drawResult").innerHTML =
+    `<div class="card">${num}</div>`;
 }
 
-function botTurn() {
-  if (bot.length >= 5) return;
-
-  let num = Math.floor(Math.random() * 10) + 1;
-  bot.push(num);
-  show();
-
-  turn = "player";
-
-  checkEnd();
+// ストック表示
+function showStock() {
+  document.getElementById("stockList").innerHTML =
+    stock.map(n => `<div class="card">${n}</div>`).join("");
 }
 
-function show() {
+// 選択画面
+function showSelect() {
+  selected = [];
+
+  document.getElementById("selectCards").innerHTML =
+    stock.map((n, i) => 
+      `<div class="card" onclick="selectCard(${i}, this)">${n}</div>`
+    ).join("");
+}
+
+// カード選択
+function selectCard(index, el) {
+  if (selected.includes(index)) {
+    selected = selected.filter(i => i !== index);
+    el.classList.remove("selected");
+  } else {
+    if (selected.length >= 5) return;
+    selected.push(index);
+    el.classList.add("selected");
+  }
+}
+
+// バトル開始
+function startBattle() {
+  if (selected.length !== 5) {
+    alert("5枚選んで！");
+    return;
+  }
+
+  let player = selected.map(i => stock[i]);
+  let bot = [];
+
+  for (let i = 0; i < 5; i++) {
+    bot.push(Math.floor(Math.random() * 10) + 1);
+  }
+
+  // 表示
   document.getElementById("player").innerHTML =
     player.map(n => `<div class="card">${n}</div>`).join("");
 
   document.getElementById("bot").innerHTML =
     bot.map(n => `<div class="card">${n}</div>`).join("");
-}
 
-function checkEnd() {
-  if (player.length === 5 && bot.length === 5) {
-    let playerSum = player.reduce((a,b) => a+b, 0);
-    let botSum = bot.reduce((a,b) => a+b, 0);
+  // 勝敗
+  let pSum = player.reduce((a,b)=>a+b,0);
+  let bSum = bot.reduce((a,b)=>a+b,0);
 
-    let resultText = "";
+  let result = "";
 
-    if (playerSum > botSum) {
-      resultText = "あなたの勝ち！";
-    } else if (playerSum < botSum) {
-      resultText = "BOTの勝ち！";
-    } else {
-      resultText = "引き分け！";
-    }
+  if (pSum > bSum) result = "あなたの勝ち！";
+  else if (pSum < bSum) result = "BOTの勝ち！";
+  else result = "引き分け！";
 
-    document.getElementById("result").innerHTML =
-      `結果：あなた ${playerSum} - BOT ${botSum}<br>${resultText}`;
-  }
+  document.getElementById("result").innerHTML =
+    `あなた ${pSum} - BOT ${bSum}<br>${result}`;
 }
 </script>
 
