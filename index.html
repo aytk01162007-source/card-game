@@ -1,48 +1,37 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>カードゲーム</title>
-  <style>
-    body {
-      text-align: center;
-      background: #222;
-      color: white;
-    }
-    .card {
-      display: inline-block;
-      width: 60px;
-      height: 90px;
-      border: 1px solid white;
-      margin: 5px;
-      line-height: 90px;
-    }
-  </style>
-</head>
-<body>
-
-<h1>カードゲーム</h1>
-
 <button onclick="drawCard()">カードを引く</button>
 
-<div id="hand"></div>
+<h2>自分</h2>
+<div id="player"></div>
+
+<h2>BOT</h2>
+<div id="bot"></div>
 
 <script>
-let hand = [];
+let player = [];
+let bot = [];
+let turn = "player";
 
 function drawCard() {
+  if (turn !== "player") return;
+
   let num = Math.floor(Math.random() * 10) + 1;
-  hand.push(num);
-  showHand();
+  player.push(num);
+  show();
+
+  turn = "bot";
+  setTimeout(botTurn, 1000);
 }
 
-function showHand() {
-  let html = "";
-  hand.forEach(c => {
-    html += `<div class="card">${c}</div>`;
-  });
-  document.getElementById("hand").innerHTML = html;
+function botTurn() {
+  let num = Math.floor(Math.random() * 10) + 1;
+  bot.push(num);
+  show();
+
+  turn = "player";
+}
+
+function show() {
+  document.getElementById("player").innerHTML = player.join(", ");
+  document.getElementById("bot").innerHTML = bot.join(", ");
 }
 </script>
-
-</body>
-</html>
