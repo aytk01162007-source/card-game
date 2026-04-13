@@ -1,3 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>カードゲーム</title>
+  <style>
+    body {
+      text-align: center;
+      background: #222;
+      color: white;
+      font-family: sans-serif;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 10px;
+    }
+
+    .card {
+      display: inline-block;
+      width: 60px;
+      height: 90px;
+      border: 2px solid white;
+      border-radius: 8px;
+      margin: 5px;
+      line-height: 90px;
+      font-size: 20px;
+      background: #333;
+    }
+  </style>
+</head>
+<body>
+
+<h1>カードバトル</h1>
+
 <button onclick="drawCard()">カードを引く</button>
 
 <h2>自分</h2>
@@ -6,6 +41,8 @@
 <h2>BOT</h2>
 <div id="bot"></div>
 
+<h2 id="result"></h2>
+
 <script>
 let player = [];
 let bot = [];
@@ -13,6 +50,8 @@ let turn = "player";
 
 function drawCard() {
   if (turn !== "player") return;
+
+  if (player.length >= 5) return;
 
   let num = Math.floor(Math.random() * 10) + 1;
   player.push(num);
@@ -23,15 +62,45 @@ function drawCard() {
 }
 
 function botTurn() {
+  if (bot.length >= 5) return;
+
   let num = Math.floor(Math.random() * 10) + 1;
   bot.push(num);
   show();
 
   turn = "player";
+
+  checkEnd();
 }
 
 function show() {
-  document.getElementById("player").innerHTML = player.join(", ");
-  document.getElementById("bot").innerHTML = bot.join(", ");
+  document.getElementById("player").innerHTML =
+    player.map(n => `<div class="card">${n}</div>`).join("");
+
+  document.getElementById("bot").innerHTML =
+    bot.map(n => `<div class="card">${n}</div>`).join("");
+}
+
+function checkEnd() {
+  if (player.length === 5 && bot.length === 5) {
+    let playerSum = player.reduce((a,b) => a+b, 0);
+    let botSum = bot.reduce((a,b) => a+b, 0);
+
+    let resultText = "";
+
+    if (playerSum > botSum) {
+      resultText = "あなたの勝ち！";
+    } else if (playerSum < botSum) {
+      resultText = "BOTの勝ち！";
+    } else {
+      resultText = "引き分け！";
+    }
+
+    document.getElementById("result").innerHTML =
+      `結果：あなた ${playerSum} - BOT ${botSum}<br>${resultText}`;
+  }
 }
 </script>
+
+</body>
+</html>
