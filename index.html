@@ -11,15 +11,12 @@
       text-align: center;
     }
 
-    /* 所持金 */
     #money {
       position: fixed;
       top: 10px;
       left: 10px;
-      font-size: 18px;
     }
 
-    /* メニュー */
     #menu {
       position: fixed;
       top: 10px;
@@ -48,9 +45,7 @@
       border-radius: 8px;
       margin: 5px;
       line-height: 90px;
-      font-size: 20px;
       background: #333;
-      cursor: pointer;
     }
 
     .selected {
@@ -65,13 +60,13 @@
 <div id="menu">
   <button onclick="showScreen('draw')">ガチャ</button>
   <button onclick="showScreen('stock')">ストック</button>
-  <button onclick="showScreen('battle')">対戦</button>
+  <button onclick="showScreen('battleSelect')">対戦</button>
   <button onclick="showScreen('coin')">コイン</button>
 </div>
 
 <!-- ガチャ -->
 <div id="draw" class="screen active">
-  <h2>カードを引く</h2>
+  <h2>ガチャ</h2>
   <button onclick="drawCard()">1回（100）</button>
   <button onclick="draw10()">10連（900）</button>
   <div id="drawResult"></div>
@@ -83,9 +78,17 @@
   <div id="stockList"></div>
 </div>
 
+<!-- BOT選択 -->
+<div id="battleSelect" class="screen">
+  <h2>難易度選択</h2>
+  <button onclick="startSelect('easy')">弱い（+100）</button>
+  <button onclick="startSelect('normal')">普通（+200）</button>
+  <button onclick="startSelect('hard')">強い（+300）</button>
+</div>
+
 <!-- 対戦 -->
 <div id="battle" class="screen">
-  <h2>対戦（5枚選択）</h2>
+  <h2>カードを5枚選択</h2>
   <div id="selectCards"></div>
   <button onclick="startBattle()">決定</button>
 
@@ -96,39 +99,37 @@
   <div id="bot"></div>
 
   <h2 id="result"></h2>
+
+  <button onclick="backToSelect()">もう一度</button>
 </div>
 
 <!-- コイン -->
 <div id="coin" class="screen">
-  <h2>コインを稼ぐ</h2>
-  <p>（ここに後でミニゲームなど追加）</p>
-  <button onclick="getCoin()">とりあえず100コインGET</button>
+  <h2>コイン</h2>
+  <button onclick="getCoin()">+100</button>
 </div>
 
 <script>
 let stock = [];
 let selected = [];
 let money = 900;
+let difficulty = "easy";
 
-// 表示更新
 function updateMoney() {
   document.getElementById("money").innerText = "💰 " + money;
 }
 
-// 画面切り替え
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 
   if (id === "stock") showStock();
-  if (id === "battle") showSelect();
 }
 
-// ガチャ（1回）
+// ガチャ
 function drawCard() {
-  if (money < 100) return alert("コイン不足！");
-  money -= 100;
-  updateMoney();
+  if (money < 100) return alert("コイン不足");
+  money -= 100; updateMoney();
 
   let num = Math.floor(Math.random() * 10) + 1;
   stock.push(num);
@@ -137,11 +138,9 @@ function drawCard() {
     `<div class="card">${num}</div>`;
 }
 
-// ガチャ（10連）
 function draw10() {
-  if (money < 900) return alert("コイン不足！");
-  money -= 900;
-  updateMoney();
+  if (money < 900) return alert("コイン不足");
+  money -= 900; updateMoney();
 
   let result = "";
   for (let i = 0; i < 10; i++) {
@@ -149,73 +148,89 @@ function draw10() {
     stock.push(num);
     result += `<div class="card">${num}</div>`;
   }
-
   document.getElementById("drawResult").innerHTML = result;
 }
 
-// ストック表示
+// ストック
 function showStock() {
   document.getElementById("stockList").innerHTML =
     stock.map(n => `<div class="card">${n}</div>`).join("");
 }
 
-// 選択画面
-function showSelect() {
-  selected = [];
-
-  document.getElementById("selectCards").innerHTML =
-    stock.map((n, i) => 
-      `<div class="card" onclick="selectCard(${i}, this)">${n}</div>`
-    ).join("");
+// 難易度選択
+function startSelect(diff) {
+  difficulty = diff;
+  showScreen("battle");
+  showCards();
 }
 
 // カード選択
-function selectCard(index, el) {
-  if (selected.includes(index)) {
-    selected = selected.filter(i => i !== index);
+function showCards() {
+  selected = [];
+  document.getElementById("selectCards").innerHTML =
+    stock.map((n,i)=>
+      `<div class="card" onclick="selectCard(${i},this)">${n}</div>`
+    ).join("");
+}
+
+function selectCard(i,el) {
+  if (selected.includes(i)) {
+    selected = selected.filter(x=>x!==i);
     el.classList.remove("selected");
   } else {
-    if (selected.length >= 5) return;
-    selected.push(index);
+    if (selected.length>=5) return;
+    selected.push(i);
     el.classList.add("selected");
   }
 }
 
+// BOT生成（強さ別）
+function getBotCard() {
+  if (difficulty === "easy") return Math.floor(Math.random()*6)+1;
+  if (difficulty === "normal") return Math.floor(Math.random()*8)+2;
+  if (difficulty === "hard") return Math.floor(Math.random()*6)+5;
+}
+
 // バトル
 function startBattle() {
-  if (selected.length !== 5) return alert("5枚選んで！");
+  if (selected.length !== 5) return alert("5枚選んで");
 
-  let player = selected.map(i => stock[i]);
+  let player = selected.map(i=>stock[i]);
   let bot = [];
 
-  for (let i = 0; i < 5; i++) {
-    bot.push(Math.floor(Math.random() * 10) + 1);
+  for (let i=0;i<5;i++) {
+    bot.push(getBotCard());
   }
 
   document.getElementById("player").innerHTML =
-    player.map(n => `<div class="card">${n}</div>`).join("");
+    player.map(n=>`<div class="card">${n}</div>`).join("");
 
   document.getElementById("bot").innerHTML =
-    bot.map(n => `<div class="card">${n}</div>`).join("");
+    bot.map(n=>`<div class="card">${n}</div>`).join("");
 
-  let pSum = player.reduce((a,b)=>a+b,0);
-  let bSum = bot.reduce((a,b)=>a+b,0);
+  let p = player.reduce((a,b)=>a+b,0);
+  let b = bot.reduce((a,b)=>a+b,0);
 
-  let result = "";
+  let reward = difficulty==="easy"?100: difficulty==="normal"?200:300;
 
-  if (pSum > bSum) {
-    result = "あなたの勝ち！ (+100コイン)";
-    money += 100;
+  let result="";
+  if (p>b) {
+    result="勝ち！ +" + reward;
+    money += reward;
     updateMoney();
-  }
-  else if (pSum < bSum) result = "BOTの勝ち！";
-  else result = "引き分け！";
+  } else if (p<b) result="負け！";
+  else result="引き分け";
 
   document.getElementById("result").innerHTML =
-    `あなた ${pSum} - BOT ${bSum}<br>${result}`;
+    `あなた ${p} - BOT ${b}<br>${result}`;
 }
 
-// コイン仮取得
+// 戻る
+function backToSelect() {
+  showScreen("battleSelect");
+}
+
+// コイン
 function getCoin() {
   money += 100;
   updateMoney();
