@@ -11,6 +11,14 @@
       text-align: center;
     }
 
+    /* 所持金 */
+    #money {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      font-size: 18px;
+    }
+
     /* メニュー */
     #menu {
       position: fixed;
@@ -52,17 +60,20 @@
 </head>
 <body>
 
-<!-- メニュー -->
+<div id="money">💰 900</div>
+
 <div id="menu">
-  <button onclick="showScreen('draw')">カードを引く</button>
+  <button onclick="showScreen('draw')">ガチャ</button>
   <button onclick="showScreen('stock')">ストック</button>
   <button onclick="showScreen('battle')">対戦</button>
+  <button onclick="showScreen('coin')">コイン</button>
 </div>
 
-<!-- カードを引く -->
+<!-- ガチャ -->
 <div id="draw" class="screen active">
   <h2>カードを引く</h2>
-  <button onclick="drawCard()">引く</button>
+  <button onclick="drawCard()">1回（100）</button>
+  <button onclick="draw10()">10連（900）</button>
   <div id="drawResult"></div>
 </div>
 
@@ -75,7 +86,6 @@
 <!-- 対戦 -->
 <div id="battle" class="screen">
   <h2>対戦（5枚選択）</h2>
-  <p>カードを5枚選んでね</p>
   <div id="selectCards"></div>
   <button onclick="startBattle()">決定</button>
 
@@ -88,9 +98,22 @@
   <h2 id="result"></h2>
 </div>
 
+<!-- コイン -->
+<div id="coin" class="screen">
+  <h2>コインを稼ぐ</h2>
+  <p>（ここに後でミニゲームなど追加）</p>
+  <button onclick="getCoin()">とりあえず100コインGET</button>
+</div>
+
 <script>
 let stock = [];
 let selected = [];
+let money = 900;
+
+// 表示更新
+function updateMoney() {
+  document.getElementById("money").innerText = "💰 " + money;
+}
 
 // 画面切り替え
 function showScreen(id) {
@@ -101,13 +124,33 @@ function showScreen(id) {
   if (id === "battle") showSelect();
 }
 
-// カードを引く
+// ガチャ（1回）
 function drawCard() {
+  if (money < 100) return alert("コイン不足！");
+  money -= 100;
+  updateMoney();
+
   let num = Math.floor(Math.random() * 10) + 1;
   stock.push(num);
 
   document.getElementById("drawResult").innerHTML =
     `<div class="card">${num}</div>`;
+}
+
+// ガチャ（10連）
+function draw10() {
+  if (money < 900) return alert("コイン不足！");
+  money -= 900;
+  updateMoney();
+
+  let result = "";
+  for (let i = 0; i < 10; i++) {
+    let num = Math.floor(Math.random() * 10) + 1;
+    stock.push(num);
+    result += `<div class="card">${num}</div>`;
+  }
+
+  document.getElementById("drawResult").innerHTML = result;
 }
 
 // ストック表示
@@ -138,12 +181,9 @@ function selectCard(index, el) {
   }
 }
 
-// バトル開始
+// バトル
 function startBattle() {
-  if (selected.length !== 5) {
-    alert("5枚選んで！");
-    return;
-  }
+  if (selected.length !== 5) return alert("5枚選んで！");
 
   let player = selected.map(i => stock[i]);
   let bot = [];
@@ -152,25 +192,33 @@ function startBattle() {
     bot.push(Math.floor(Math.random() * 10) + 1);
   }
 
-  // 表示
   document.getElementById("player").innerHTML =
     player.map(n => `<div class="card">${n}</div>`).join("");
 
   document.getElementById("bot").innerHTML =
     bot.map(n => `<div class="card">${n}</div>`).join("");
 
-  // 勝敗
   let pSum = player.reduce((a,b)=>a+b,0);
   let bSum = bot.reduce((a,b)=>a+b,0);
 
   let result = "";
 
-  if (pSum > bSum) result = "あなたの勝ち！";
+  if (pSum > bSum) {
+    result = "あなたの勝ち！ (+100コイン)";
+    money += 100;
+    updateMoney();
+  }
   else if (pSum < bSum) result = "BOTの勝ち！";
   else result = "引き分け！";
 
   document.getElementById("result").innerHTML =
     `あなた ${pSum} - BOT ${bSum}<br>${result}`;
+}
+
+// コイン仮取得
+function getCoin() {
+  money += 100;
+  updateMoney();
 }
 </script>
 
