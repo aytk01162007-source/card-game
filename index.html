@@ -37,8 +37,14 @@
       display: block;
     }
 
-    .card {
-      display: inline-block;
+  #stockList {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card {
+  display: block;
       width: 80px;
       height: 110px;
       border: 2px solid white;
@@ -53,6 +59,12 @@
     .rare {
       border-color: gold;
     }
+    #deckArea {
+  border: 2px solid white;
+  padding: 10px;
+  margin: 10px;
+  min-height: 120px;
+}
   </style>
 </head>
 <body>
@@ -76,7 +88,10 @@
 
 <!-- ストック -->
 <div id="stock" class="screen">
-  <h2>ストック（タップで強化）</h2>
+  <h2>デッキ（20枚まで）</h2>
+  <div id="deckArea"></div>
+
+  <h2>ストック（タップでデッキ追加 / 長押しで強化）</h2>
   <div id="stockList"></div>
 </div>
 
@@ -133,6 +148,7 @@ let stock = [];
 let selected = [];
 let difficulty = "easy";
 let currentCardIndex = null;
+  let deck = [];
 
 // キャラ一覧
 const characters = [
@@ -209,8 +225,31 @@ function cardHTML(c){
 
 // ストック
 function showStock(){
-  document.getElementById("stockList").innerHTML=
-    stock.map((c,i)=>`<div onclick="openUpgrade(${i})">${cardHTML(c)}</div>`).join("");
+  function addToDeck(i){
+  if(deck.length >= 20) return alert("デッキは20枚まで");
+
+  if(deck.some(c => c.name === stock[i].name)){
+    return alert("同じカードは入れられない");
+  }
+
+  deck.push({...stock[i]});
+  showStock();
+}
+
+function removeFromDeck(i){
+  deck.splice(i,1);
+  showStock();
+}
+
+  // デッキ表示
+  document.getElementById("deckArea").innerHTML =
+    deck.map((c,i)=>`<div class="card" onclick="removeFromDeck(${i})">
+      ${c.name}<br>Lv.${c.level}
+    </div>`).join("");
+
+  // ストック表示（タップでデッキへ）
+  document.getElementById("stockList").innerHTML =
+    stock.map((c,i)=>`<div onclick="addToDeck(${i})">${cardHTML(c)}</div>`).join("");
 }
 
 // 強化画面
@@ -289,8 +328,9 @@ function startBattle(){
 
   if(selected.length !== 5) return alert("5枚選んで");
 
-  // デッキ20枚（選んだ5枚＋ランダム）
-  deck = selected.map(i=>({...stock[i]}));
+  // デッキ20枚
+  if(deck.length !== 20) return alert("デッキは20枚必要");
+deck = [...deck];
 
   while(deck.length < 20){
     deck.push(createCard());
