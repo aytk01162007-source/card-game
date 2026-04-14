@@ -98,18 +98,27 @@
 
 <!-- 対戦 -->
 <div id="battle" class="screen">
-  <h2>カードを5枚選択</h2>
-  <div id="selectCards"></div>
-  <button onclick="startBattle()">決定</button>
+  <h2>対戦</h2>
 
-  <h3>自分</h3>
-  <div id="player"></div>
+  <div>自分ライフ: <span id="pLife">5000</span></div>
+  <div>相手ライフ: <span id="eLife">5000</span></div>
 
-  <h3>BOT</h3>
-  <div id="bot"></div>
+  <h3>手札</h3>
+  <div id="hand"></div>
+
+  <h3>バトルゾーン（タップで攻撃）</h3>
+  <div id="battleZone"></div>
+
+  <h3>待機ゾーン</h3>
+  <div id="benchZone"></div>
+
+  <button onclick="drawPhase()">ドロー</button>
+  <button onclick="passTurn()">パス</button>
+
+  <h3>相手バトルゾーン</h3>
+  <div id="enemyZone"></div>
 
   <h2 id="result"></h2>
-  <button onclick="showScreen('battleSelect')">もう一度</button>
 </div>
 
 <!-- コイン -->
@@ -263,14 +272,151 @@ function createBotCard(){
 
 // バトル
 function startBattle(){
-  if(selected.length!==5) return alert("5枚選んで");
+  // ===== 対戦用データ =====
+let playerLife = 5000;
+let enemyLife = 5000;
 
-  let player=selected.map(i=>stock[i]);
-  let bot=[];
+let deck = [];
+let hand = [];
+let battleZone = [];
+let benchZone = [];
+let enemyZone = [];
 
-  for(let i=0;i<5;i++){
-    bot.push(createBotCard());
+let hasAttacked = false;
+
+// ===== 対戦開始 =====
+function startBattle(){
+
+  if(selected.length !== 5) return alert("5枚選んで");
+
+  // デッキ20枚（選んだ5枚＋ランダム）
+  deck = selected.map(i=>({...stock[i]}));
+
+  while(deck.length < 20){
+    deck.push(createCard());
   }
+
+  // 初期化
+  hand = [];
+  battleZone = [];
+  benchZone = [];
+  enemyZone = [];
+  playerLife = 5000;
+  enemyLife = 5000;
+
+  // 初手5枚
+  for(let i=0;i<5;i++){
+    hand.push(deck.pop());
+  }
+
+  // 敵
+  enemyZone.push(createBotCard(), createBotCard());
+
+  showScreen("battle");
+  updateBattleUI();
+}
+
+// ===== ドロー =====
+function drawPhase(){
+  if(deck.length>0){
+    hand.push(deck.pop());
+  }
+  hasAttacked = false;
+  updateBattleUI();
+}
+
+// ===== カード出す =====
+function playToField(i){
+
+  let c = hand[i];
+
+  if(battleZone.length < 2){
+    battleZone.push(c);
+  }else if(benchZone.length < 3){
+    benchZone.push(c);
+  }else{
+    alert("場がいっぱい");
+    return;
+  }
+
+  hand.splice(i,1);
+  updateBattleUI();
+}
+
+// ===== 攻撃 =====
+function attack(i){
+
+  if(hasAttacked) return alert("このターンはもう攻撃済み");
+  if(enemyZone.length===0) return;
+
+  let attacker = battleZone[i];
+  let target = enemyZone[0];
+
+  target.def -= (attacker.level * 200);
+
+  if(target.def <= 0){
+    enemyLife += target.def;
+    enemyZone.splice(0,1);
+  }
+
+  hasAttacked = true;
+  endTurn();
+}
+
+// ===== パス =====
+function passTurn(){
+  endTurn();
+}
+
+// ===== ターン終了 =====
+function endTurn(){
+
+  // 敵攻撃
+  if(enemyZone.length && battleZone.length){
+    let e = enemyZone[0];
+    let t = battleZone[0];
+
+    t.def -= (e.level * 200);
+
+    if(t.def <= 0){
+      battleZone.splice(0,1);
+    }
+  }
+
+  // 前に出る
+  while(battleZone.length < 2 && benchZone.length > 0){
+    battleZone.push(benchZone.shift());
+  }
+
+  drawPhase();
+}
+
+// ===== UI更新 =====
+function updateBattleUI(){
+
+  document.getElementById("pLife").innerText = playerLife;
+  document.getElementById("eLife").innerText = enemyLife;
+
+  document.getElementById("hand").innerHTML =
+    hand.map((c,i)=>`<div class="card" onclick="playToField(${i})">
+      ${c.name}<br>Lv.${c.level}
+    </div>`).join("");
+
+  document.getElementById("battleZone").innerHTML =
+    battleZone.map((c,i)=>`<div class="card" onclick="attack(${i})">
+      ${c.name}<br>Lv.${c.level}<br>DEF:${c.def||1000}
+    </div>`).join("");
+
+  document.getElementById("benchZone").innerHTML =
+    benchZone.map(c=>`<div class="card">
+      ${c.name}<br>Lv.${c.level}
+    </div>`).join("");
+
+  document.getElementById("enemyZone").innerHTML =
+    enemyZone.map(c=>`<div class="card">
+      ${c.name}<br>Lv.${c.level}<br>DEF:${c.def||1000}
+    </div>`).join("");
+}
 
   document.getElementById("player").innerHTML=player.map(cardHTML).join("");
   document.getElementById("bot").innerHTML=bot.map(cardHTML).join("");
