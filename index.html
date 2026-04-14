@@ -10,6 +10,13 @@
       color: white;
       text-align: center;
     }
+    
+#drawResult {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+  
 
     #money {
       position: fixed;
@@ -225,6 +232,23 @@ function cardHTML(c){
 
 // ストック
 function showStock(){
+
+  // デッキ表示
+  document.getElementById("deckArea").innerHTML =
+    deck.map((c,i)=>`
+      <div class="card" onclick="removeFromDeck(${i})">
+        ${c.name}<br>Lv.${c.level}
+      </div>
+    `).join("");
+
+  // ストック表示（クリックでデッキ追加）
+  document.getElementById("stockList").innerHTML =
+    stock.map((c,i)=>`
+      <div onclick="addToDeck(${i})">
+        ${cardHTML(c)}
+      </div>
+    `).join("");
+}
   function addToDeck(i){
   if(deck.length >= 20) return alert("デッキは20枚まで");
 
