@@ -2,46 +2,41 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ボイシング・カードバトル - 育成版</title>
+  <title>ボイシング・カードバトル - DX版</title>
   <style>
-    body { margin: 0; font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; }
+    body { margin: 0; font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; overflow-x: hidden; }
     
-    /* 右上のステータス表示 */
-    #status-bar { position: fixed; top: 10px; left: 10px; z-index: 100; display: flex; gap: 10px; }
-    .status-item { background: rgba(0,0,0,0.8); padding: 8px 15px; border-radius: 5px; border: 1px solid gold; color: gold; font-weight: bold; font-size: 14px; }
+    /* ステータスバー */
+    #status-bar { position: fixed; top: 10px; left: 10px; z-index: 100; display: flex; gap: 8px; }
+    .status-item { background: rgba(0,0,0,0.8); padding: 6px 12px; border-radius: 5px; border: 1px solid gold; color: gold; font-weight: bold; font-size: 13px; min-width: 60px; }
     
     #menu { position: fixed; top: 10px; right: 10px; z-index: 100; }
-    button { margin: 5px; padding: 10px 15px; cursor: pointer; background: #333; color: white; border: 1px solid #777; border-radius: 4px; font-weight: bold; }
-    button:hover { background: #555; border-color: #ccc; }
+    button { margin: 4px; padding: 10px 15px; cursor: pointer; background: #333; color: white; border: 1px solid #777; border-radius: 4px; font-weight: bold; }
+    button:hover { background: #555; }
     
-    .screen { display: none; padding-top: 70px; padding-bottom: 50px; }
+    .screen { display: none; padding-top: 70px; padding-bottom: 50px; min-height: 100vh; box-sizing: border-box; }
     .active { display: block; }
     
-    .card-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-height: 150px; padding: 10px; background: rgba(255,255,255,0.03); margin: 10px; border-radius: 10px; border: 1px solid #333; }
+    .card-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-height: 150px; padding: 10px; background: rgba(255,255,255,0.03); margin: 10px; border-radius: 10px; }
     
     /* カードデザイン */
-    .card { width: 100px; height: 145px; border: 2px solid #ccc; border-radius: 8px; background: #222; cursor: pointer; font-size: 10px; display: flex; flex-direction: column; justify-content: space-between; padding: 6px; box-sizing: border-box; position: relative; overflow: hidden; user-select: none; }
-    .card .title { font-size: 9px; color: #aaa; height: 30px; overflow: hidden; }
-    .card .name { font-weight: bold; font-size: 11px; }
-    .card .stars { color: gold; font-size: 12px; }
+    .card { width: 95px; height: 140px; border: 2px solid #ccc; border-radius: 8px; background: #222; cursor: pointer; font-size: 10px; display: flex; flex-direction: column; justify-content: space-between; padding: 6px; box-sizing: border-box; position: relative; user-select: none; }
+    .card .title { font-size: 8px; color: #aaa; height: 25px; overflow: hidden; }
+    .card .stars { color: gold; }
+    .star2 { border-color: #4488ff; }
+    .star3 { border-color: #ffcc00; box-shadow: 0 0 10px gold; }
+
+    /* ミニゲーム用 */
+    #mg-area { width: 300px; height: 40px; background: #333; margin: 20px auto; position: relative; border-radius: 20px; border: 2px solid #fff; overflow: hidden; }
+    #mg-bar { width: 10px; height: 100%; background: #ff4444; position: absolute; left: 0; box-shadow: 0 0 10px red; }
+    #mg-target { width: 40px; height: 100%; background: rgba(255,215,0,0.5); position: absolute; left: 130px; border-left: 2px solid gold; border-right: 2px solid gold; }
+
+    /* ショップセクション */
+    .shop-section { background: rgba(255,255,255,0.05); margin: 15px; padding: 15px; border-radius: 10px; border: 1px solid #444; }
+    .treasure { font-size: 40px; cursor: pointer; transition: 0.2s; display: inline-block; }
+    .treasure:hover { transform: scale(1.2) rotate(5deg); }
     
-    .star1 { border-color: #eee; }
-    .star2 { border-color: #4488ff; box-shadow: 0 0 5px #4488ff; }
-    .star3 { border-color: #ffcc00; box-shadow: 0 0 10px rgba(255,204,0,0.7); background: linear-gradient(135deg, #222 0%, #3a3a00 100%); }
-    
-    .disabled { opacity: 0.5; filter: grayscale(1); cursor: default; }
-
-    /* バトル */
-    .battle-info { background: #000; padding: 15px; display: flex; justify-content: space-around; font-weight: bold; font-size: 1.1em; border-bottom: 2px solid #444; }
-    .zone-label { font-size: 0.8em; color: #ffcc00; margin-top: 15px; font-weight: bold; }
-
-    /* 操作パネル */
-    #actionPanel { display: none; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.95); padding: 25px; border-radius: 15px; border: 3px solid gold; z-index: 200; box-shadow: 0 0 40px rgba(0,0,0,1); }
-    .coin-btn { font-size: 1.2em; padding: 15px 30px; background: #444; color: white; border: 2px solid gold; border-radius: 10px; margin: 10px; width: 220px; }
-    .coin-btn:active { transform: scale(0.98); }
-
-    .cost-info { margin: 10px; font-size: 0.9em; color: #ddd; }
-    .cost-info span { color: gold; font-weight: bold; }
+    .cost-text { font-size: 0.8em; color: #bbb; margin-bottom: 5px; }
   </style>
 </head>
 <body>
@@ -49,305 +44,232 @@
 <div id="status-bar">
   <div class="status-item">💰 <span id="val-money">900</span></div>
   <div class="status-item">🎶 <span id="val-notes">50</span></div>
+  <div class="status-item">🔑 <span id="val-keys">0</span></div>
 </div>
 
 <div id="menu">
   <button onclick="showScreen('draw')">ガチャ</button>
-  <button onclick="showScreen('stock')">デッキ編成</button>
+  <button onclick="showScreen('stock')">デッキ</button>
   <button onclick="showScreen('battleSelect')">対戦</button>
-  <button onclick="showScreen('coin')">素材補充</button>
+  <button onclick="showScreen('shop')">ショップ</button>
 </div>
 
 <!-- ガチャ -->
 <div id="draw" class="screen active">
-  <h2>ガチャ</h2>
-  <button onclick="drawCard()">1回（100）</button>
-  <button onclick="draw10()">10連（900）</button>
+  <h2>通常ガチャ</h2>
+  <button onclick="drawCard()">1回（100コイン）</button>
+  <button onclick="draw10()">10連（900コイン）</button>
   <div id="drawResult" class="card-container"></div>
 </div>
 
 <!-- デッキ編成 -->
 <div id="stock" class="screen">
-  <p style="font-size:0.8em; color: #aaa;">※カード長押しで強化画面へ</p>
-  <h2>現在のデッキ (<span id="deckCount">0</span>/20)</h2>
+  <p style="font-size:0.7em;">※長押しで強化画面</p>
+  <h2>デッキ (<span id="deckCount">0</span>/20)</h2>
   <div id="deckArea" class="card-container"></div>
-  <h2>所持カード (タップでデッキ追加)</h2>
+  <h2>所持カード</h2>
   <div id="stockList" class="card-container"></div>
 </div>
 
 <!-- 強化 -->
 <div id="upgrade" class="screen">
   <h2>カード強化</h2>
-  <div id="upgradeCard" style="display: flex; justify-content: center; margin-bottom: 20px;"></div>
-  <div class="cost-info">
-    次のレベルに必要な素材:<br>
-    💰 <span id="cost-coin">0</span> コイン / 🎶 <span id="cost-notes">0</span> 音符
-  </div>
-  <button onclick="levelUp()" id="btn-upgrade" style="padding: 15px 30px; background: #262; border-color: gold;">レベルアップ！</button>
+  <div id="upgradeCard" style="display: flex; justify-content: center; margin-bottom: 15px;"></div>
+  <div id="upgradeCost" style="font-size: 0.9em; color: gold; margin-bottom: 10px;"></div>
+  <button onclick="levelUp()" style="background: #262;">レベルアップ！</button>
   <button onclick="showScreen('stock')">戻る</button>
 </div>
 
-<!-- 対戦選択 -->
+<!-- 対戦 -->
 <div id="battleSelect" class="screen">
-  <h2>難易度を選択</h2>
-  <button onclick="startBattle('easy')">初級</button>
-  <button onclick="startBattle('normal')">中級</button>
-  <button onclick="startBattle('hard')">上級</button>
+  <h2>難易度選択</h2>
+  <button onclick="startBattle('easy')">初級 (鍵率10%)</button>
+  <button onclick="startBattle('normal')">中級 (鍵率25%)</button>
+  <button onclick="startBattle('hard')">上級 (鍵率50%)</button>
 </div>
 
-<!-- 対戦画面 -->
 <div id="battle" class="screen">
   <div class="battle-info">
-    <div style="color: #ff4444;">ENEMY: <span id="eLife">5000</span></div>
-    <div style="color: #44ff44;">YOU: <span id="pLife">5000</span></div>
+    <div style="color:#ff6666">E: <span id="eLife">5000</span></div>
+    <div style="color:#66ff66">P: <span id="pLife">5000</span></div>
   </div>
   <div id="enemyZone" class="card-container"></div>
   <div id="battleZone" class="card-container"></div>
   <div id="benchZone" class="card-container"></div>
   <div id="hand" class="card-container"></div>
-  <button onclick="passTurn()" style="background: #a22; width: 90%; padding: 15px; margin: 10px;">ターン終了</button>
+  <button onclick="passTurn()" style="background:#822; width:90%;">ターン終了</button>
 </div>
 
-<!-- 操作パネル -->
-<div id="actionPanel">
-  <div id="selectedCardName" style="margin-bottom:15px; font-weight:bold; color: gold;"></div>
-  <button onclick="confirmPlay('battle')" style="background: #282;">バトルゾーンへ</button>
-  <button onclick="confirmPlay('bench')" style="background: #228;">待機ゾーンへ</button><br>
-  <button onclick="cancelPlay()" style="background:#444; margin-top:15px;">やめる</button>
+<!-- ショップ＆ミニゲーム -->
+<div id="shop" class="screen">
+  <div class="shop-section">
+    <h2>🎶 音符ミニゲーム</h2>
+    <p class="cost-text">消費: 50コイン</p>
+    <div id="mg-area">
+      <div id="mg-target"></div>
+      <div id="mg-bar"></div>
+    </div>
+    <button onclick="playMinigame()" id="mg-btn">タイミングよく止める！</button>
+    <p id="mg-msg">中心で止めると音符がたくさん貰えるよ！</p>
+  </div>
+
+  <div class="shop-section">
+    <h2>🔑 宝箱</h2>
+    <p id="key-msg">鍵を持っていれば開けられます</p>
+    <div class="treasure" onclick="openChest()">🎁</div>
+  </div>
+
+  <div class="shop-section">
+    <h2>💎 音符ガチャ</h2>
+    <p class="cost-text">消費: 20音符</p>
+    <p style="font-size:0.7em;">内容: 300〜1000コイン または ★2以上のレアカード</p>
+    <button onclick="drawNoteGacha()" style="border-color: aqua;">音符で回す</button>
+  </div>
 </div>
 
-<!-- 素材補充 -->
-<div id="coin" class="screen">
-  <h2>アイテムショップ</h2>
-  <p>活動に必要な素材を補充しましょう</p>
-  <button class="coin-btn" onclick="getCoin()">💰 コインを補充する</button><br>
-  <button class="coin-btn" onclick="getNotes()" style="border-color: #4488ff;">🎶 音符(素材)を補充する</button>
-  <p id="coinAlert" style="margin-top:20px; color: gold;"></p>
+<!-- 配置パネル -->
+<div id="actionPanel" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.95); padding:20px; border-radius:15px; border:3px solid gold; z-index:200;">
+  <div id="selectedCardName" style="margin-bottom:10px; font-weight:bold; color: gold;"></div>
+  <button onclick="confirmPlay('battle')" style="background:#282;">前衛へ</button>
+  <button onclick="confirmPlay('bench')" style="background:#228;">後衛へ</button><br>
+  <button onclick="cancelPlay()" style="background:#444; margin-top:10px;">キャンセル</button>
 </div>
 
 <script>
-// カードマスターデータ
-const cardMaster = {
-  "りうら": [{ title: "｢いれいす｣", stars: 1 }, { title: "｢恋の約束｣", stars: 2 }, { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 }, { title: "｢星降るフェアリーテイル｣", stars: 3 }],
-  "-hotoke-": [{ title: "｢いれいす｣", stars: 1 }, { title: "｢恋の約束｣", stars: 2 }, { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 }, { title: "｢星降るフェアリーテイル｣", stars: 3 }],
-  "初兎": [{ title: "｢いれいす｣", stars: 1 }, { title: "｢恋の約束｣", stars: 2 }, { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 }, { title: "｢星降るフェアリーテイル｣", stars: 3 }],
-  "ないこ": [{ title: "｢いれいす｣", stars: 1 }, { title: "｢恋の約束｣", stars: 2 }, { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 }, { title: "｢星降るフェアリーテイル｣", stars: 3 }],
-  "If": [{ title: "｢いれいす｣", stars: 1 }, { title: "｢恋の約束｣", stars: 2 }, { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 }, { title: "｢星降るフェアリーテイル｣", stars: 3 }],
-  "悠佑": [{ title: "｢いれいす｣", stars: 1 }, { title: "｢恋の約束｣", stars: 2 }, { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 }, { title: "｢星降るフェアリーテイル｣", stars: 3 }],
-  "Coe.": [{ title: "｢すたぽら｣", stars: 1 }, { title: "｢First Star｣", stars: 2 }, { title: "｢おぎゃりたい！えぶりでい｣", stars: 3 }, { title: "｢僕らのヒーロー大作戦！｣", stars: 3 }],
-  "Relu": [{ title: "｢すたぽら｣", stars: 1 }, { title: "｢First Star｣", stars: 2 }, { title: "｢おぎゃりたい！えぶりでい｣", stars: 3 }, { title: "｢僕らのヒーロー大作戦！｣", stars: 3 }],
-  "如月ゆう": [{ title: "｢すたぽら｣", stars: 1 }, { title: "｢First Star｣", stars: 2 }, { title: "｢おぎゃりたい！えぶりでい｣", stars: 3 }, { title: "｢僕らのヒーロー大作戦！｣", stars: 3 }],
-  "くに": [{ title: "｢すたぽら｣", stars: 1 }, { title: "｢First Star｣", stars: 2 }, { title: "｢おぎゃりたい！えぶりでい｣", stars: 3 }, { title: "｢僕らのヒーロー大作戦！｣", stars: 3 }],
-  "こったろ": [{ title: "｢すたぽら｣", stars: 1 }, { title: "｢First Star｣", stars: 2 }, { title: "｢おぎゃりたい！えぶりでい｣", stars: 3 }, { title: "｢僕らのヒーロー大作戦！｣", stars: 3 }],
-  "暇72": [{ title: "｢シクフォニ｣", stars: 1 }, { title: "｢J0KER×JOK3R｣", stars: 2 }, { title: "｢廻｣", stars: 3 }, { title: "｢Medi信｣", stars: 3 }],
-  "雨乃こさめ": [{ title: "｢シクフォニ｣", stars: 1 }, { title: "｢J0KER×JOK3R｣", stars: 2 }, { title: "｢廻｣", stars: 3 }, { title: "｢Medi信｣", stars: 3 }],
-  "いるま": [{ title: "｢シクフォニ｣", stars: 1 }, { title: "｢J0KER×JOK3R｣", stars: 2 }, { title: "｢廻｣", stars: 3 }, { title: "｢Medi信｣", stars: 3 }],
-  "LAN": [{ title: "｢シクフォニ｣", stars: 1 }, { title: "｢J0KER×JOK3R｣", stars: 2 }, { title: "｢廻｣", stars: 3 }, { title: "｢Medi信｣", stars: 3 }],
-  "すち": [{ title: "｢シクフォニ｣", stars: 1 }, { title: "｢J0KER×JOK3R｣", stars: 2 }, { title: "｢廻｣", stars: 3 }, { title: "｢Medi信｣", stars: 3 }],
-  "みこと": [{ title: "｢シクフォニ｣", stars: 1 }, { title: "｢J0KER×JOK3R｣", stars: 2 }, { title: "｢廻｣", stars: 3 }, { title: "｢Medi信｣", stars: 3 }],
-  "ARKHE": [{ title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 }],
-  "かなめ": [{ title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 }],
-  "うるみや": [{ title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 }],
-  "しの": [{ title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 }],
-  "しゃるろ": [{ title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 }],
-  "甘夢れむ": [{ title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 }],
-  "ユエル": [{ title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 }],
-  "初噛みつき": [{ title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 }],
-  "天來らいむ": [{ title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 }],
-  "ひづみ": [{ title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 }],
-  "らみ": [{ title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 }],
-  "リンドウネイロ": [{ title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 }],
-};
+// --- データ・変数 ---
+const cardMaster = {"りうら":[{t:"いれいす",s:1},{t:"恋の約束",s:2},{t:"3分ちょい",s:3},{t:"星降る",s:3}],"hotoke":[{t:"いれいす",s:1},{t:"恋の約束",s:2},{t:"3分ちょい",s:3},{t:"星降る",s:3}],"初兎":[{t:"いれいす",s:1},{t:"恋の約束",s:2},{t:"3分ちょい",s:3},{t:"星降る",s:3}],"ないこ":[{t:"いれいす",s:1},{t:"恋の約束",s:2},{t:"3分ちょい",s:3},{t:"星降る",s:3}],"If":[{t:"いれいす",s:1},{t:"恋の約束",s:2},{t:"3分ちょい",s:3},{t:"星降る",s:3}],"悠佑":[{t:"いれいす",s:1},{t:"恋の約束",s:2},{t:"3分ちょい",s:3},{t:"星降る",s:3}]};
+let money = 900, notes = 50, keys = 0;
+let stock = [], deck = [], currentUpgradeCard = null, pressTimer;
+let bHand, bZone, bBench, eZone, bDeck, eDeck, hasAttacked, pLife, eLife, diff;
 
-let money = 900;
-let notes = 50;
-let stock = [];
-let deck = [];
-let currentUpgradeCard = null;
+// --- ミニゲーム用 ---
+let mgPos = 0, mgDir = 2, mgActive = false;
+function updateMinigame() {
+  if(!mgActive) return;
+  mgPos += mgDir;
+  if(mgPos > 290 || mgPos < 0) mgDir *= -1;
+  document.getElementById("mg-bar").style.left = mgPos + "px";
+  requestAnimationFrame(updateMinigame);
+}
+requestAnimationFrame(updateMinigame);
 
-// --- 長押し処理用変数 ---
-let pressTimer;
+function playMinigame() {
+  if(!mgActive) {
+    if(money < 50) return alert("コイン不足");
+    money -= 50; updateStatus();
+    mgActive = true;
+    document.getElementById("mg-btn").innerText = "ここだ！！";
+  } else {
+    mgActive = false;
+    let dist = Math.abs(mgPos - 145); // 中心からの距離
+    let reward = 0;
+    if(dist < 10) { reward = 30; alert("Perfect!! 音符+30"); }
+    else if(dist < 30) { reward = 15; alert("Good! 音符+15"); }
+    else { reward = 5; alert("Nice. 音符+5"); }
+    notes += reward; updateStatus();
+    document.getElementById("mg-btn").innerText = "もう一度遊ぶ（50コイン）";
+  }
+}
 
+// --- 宝箱・音符ガチャ ---
+function openChest() {
+  if(keys <= 0) return alert("鍵を持っていません！バトルで手に入れよう");
+  keys--;
+  let win = Math.floor(Math.random()*901) + 100;
+  money += win;
+  updateStatus();
+  alert("宝箱から " + win + " コイン手に入れた！");
+}
+
+function drawNoteGacha() {
+  if(notes < 20) return alert("音符が足りません");
+  notes -= 20;
+  if(Math.random() < 0.7) {
+    let win = Math.floor(Math.random()*701) + 300;
+    money += win; alert("コイン " + win + " を獲得！");
+  } else {
+    let c = createCard(2); // 星2以上確定
+    stock.push(c); alert("レアカード「" + c.name + "」を獲得！");
+  }
+  updateStatus();
+}
+
+// --- バトル・システム ---
+function finishBattle(res) {
+  if(res === "WIN") {
+    let base = (diff==='easy'?100:diff==='normal'?300:600);
+    money += base;
+    let keyProb = (diff==='easy'?0.1:diff==='normal'?0.25:0.5);
+    let msg = "勝利！報酬 " + base + "コイン。";
+    if(Math.random() < keyProb) { keys++; msg += "\n🔑 鍵を拾った！"; }
+    alert(msg);
+  } else { alert("敗北..."); }
+  updateStatus();
+  showScreen('battleSelect');
+}
+
+// --- 基本機能 ---
 function updateStatus(){
   document.getElementById("val-money").innerText = money;
   document.getElementById("val-notes").innerText = notes;
+  document.getElementById("val-keys").innerText = keys;
 }
-
 function showScreen(id){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   if(id==='stock') showStock();
 }
-
-// --- 長押し・タップの判定 ---
-function handleStart(cardObj) {
-  pressTimer = setTimeout(() => {
-    openUpgrade(cardObj);
-  }, 600); // 0.6秒長押しで強化
+function createCard(minStar = 1){
+  const names = Object.keys(cardMaster);
+  const name = names[Math.floor(Math.random()*names.length)];
+  const vars = cardMaster[name];
+  let s = minStar === 2 ? (Math.random()<0.2?3:2) : (Math.random()<0.1?3:Math.random()<0.4?2:1);
+  let v = vars.find(x=>x.s==s) || vars[0];
+  return { id: Math.random(), name: name, title: v.t, stars: v.s, level: 1, hp: v.s*1000, maxHp: v.s*1000 };
 }
-
-function handleEnd() {
-  clearTimeout(pressTimer);
-}
-
-// --- カード生成 ---
-function createCardFromPool(){
-  const charNames = Object.keys(cardMaster);
-  const charName = charNames[Math.floor(Math.random()*charNames.length)];
-  const cardVariations = cardMaster[charName];
-  let r = Math.random();
-  let targetStar = (r < 0.1) ? 3 : (r < 0.4) ? 2 : 1;
-  let possible = cardVariations.filter(v => v.stars === targetStar);
-  if(possible.length === 0) possible = cardVariations;
-  const v = possible[Math.floor(Math.random()*possible.length)];
-  return { id: Date.now() + Math.random(), name: charName, title: v.title, stars: v.stars, level: 1, hp: v.stars * 1000, maxHp: v.stars * 1000 };
-}
-
-// --- カードHTML作成 ---
 function cardHTML(c, type){
-  let starStr = "★".repeat(c.stars);
-  let onClick = "";
-  if(type === 'stock') onClick = `onclick="addToDeck('${c.id}')"`;
-  if(type === 'deck') onClick = `onclick="removeFromDeck('${c.id}')"`;
-  if(type === 'hand') onClick = `onclick="openActionPanel('${c.id}')"`;
-  if(type === 'battle') onClick = `onclick="attack('${c.id}')"`;
-
-  return `<div class="card star${c.stars}" ${onClick} 
-          onmousedown="handleStartByKey('${c.id}')" onmouseup="handleEnd()" 
-          ontouchstart="handleStartByKey('${c.id}')" ontouchend="handleEnd()"
-          oncontextmenu="event.preventDefault(); openUpgradeByKey('${c.id}')">
-    <div class="title">${c.title}</div>
-    <div class="name">${c.name}</div>
-    <div style="color:#ff6666">HP:${Math.floor(c.hp)}</div>
-    <div class="stars">${starStr}</div>
-    <div style="font-size:8px;">Lv.${c.level}</div>
+  return `<div class="card star${c.stars}" onclick="cardClick('${c.id}','${type}')" onmousedown="startPress('${c.id}')" onmouseup="endPress()" ontouchstart="startPress('${c.id}')" ontouchend="endPress()">
+    <div class="title">${c.title}</div><div class="name">${c.name}</div>
+    <div style="color:#ff6666">HP:${Math.floor(c.hp)}</div><div class="stars">${"★".repeat(c.stars)}</div><div>Lv.${c.level}</div>
   </div>`;
 }
-
-// キーによる検索と長押し開始
-function handleStartByKey(id) {
-  let card = stock.find(c=>c.id==id) || deck.find(c=>c.id==id) || bHand.find(c=>c.id==id);
-  if(card) handleStart(card);
+function cardClick(id, type) {
+  if(type==='stock') { let i=stock.findIndex(x=>x.id==id); if(i!=-1) { if(deck.length<20) deck.push(stock.splice(i,1)[0]); else alert("20枚まで"); showStock(); } }
+  if(type==='deck') { let i=deck.findIndex(x=>x.id==id); if(i!=-1) { stock.push(deck.splice(i,1)[0]); showStock(); } }
+  if(type==='hand') { selectedCardId = id; document.getElementById("actionPanel").style.display="block"; }
+  if(type==='battle') attack(id);
 }
-
-// 強化画面へ
-function openUpgrade(card) {
-  currentUpgradeCard = card;
-  showScreen("upgrade");
-  document.getElementById("upgradeCard").innerHTML = cardHTML(card, 'none');
-  
-  // 必要コスト計算 (Lv1->2: 70コイン, 7音符)
-  let costC = card.level * 20 + 50;
-  let costN = card.level * 2 + 5;
-  document.getElementById("cost-coin").innerText = costC;
-  document.getElementById("cost-notes").innerText = costN;
+function startPress(id){ pressTimer = setTimeout(()=> {
+  let c = stock.find(x=>x.id==id) || deck.find(x=>x.id==id);
+  if(c) { currentUpgradeCard = c; showScreen('upgrade'); updateUpgradeInfo(); }
+}, 600); }
+function endPress(){ clearTimeout(pressTimer); }
+function updateUpgradeInfo(){
+  document.getElementById("upgradeCard").innerHTML = cardHTML(currentUpgradeCard, 'none');
+  let cC = currentUpgradeCard.level*20+50, cN = Math.floor(currentUpgradeCard.level/2)+5;
+  document.getElementById("upgradeCost").innerText = `必要: 💰${cC} / 🎶${cN}`;
 }
-
 function levelUp(){
-  if(!currentUpgradeCard) return;
-  let costC = currentUpgradeCard.level * 20 + 50;
-  let costN = currentUpgradeCard.level * 2 + 5;
-  
-  if(money < costC || notes < costN) return alert("素材が足りません！");
-  
-  money -= costC;
-  notes -= costN;
-  currentUpgradeCard.level++;
-  currentUpgradeCard.maxHp += 500;
-  currentUpgradeCard.hp = currentUpgradeCard.maxHp;
-  
-  updateStatus();
-  openUpgrade(currentUpgradeCard); // 表示更新
+  let cC = currentUpgradeCard.level*20+50, cN = Math.floor(currentUpgradeCard.level/2)+5;
+  if(money < cC || notes < cN) return alert("素材不足");
+  money-=cC; notes-=cN; currentUpgradeCard.level++;
+  currentUpgradeCard.maxHp+=500; currentUpgradeCard.hp = currentUpgradeCard.maxHp;
+  updateStatus(); updateUpgradeInfo();
 }
 
-// --- ガチャ ---
-function drawCard(){
-  if(money < 100) return alert("コイン不足");
-  money -= 100; updateStatus();
-  let c = createCardFromPool(); stock.push(c);
-  document.getElementById("drawResult").innerHTML = cardHTML(c, 'none');
-}
-function draw10(){
-  if(money < 900) return alert("コイン不足");
-  money -= 900; updateStatus();
-  let html = "";
-  for(let i=0; i<10; i++){ let c = createCardFromPool(); stock.push(c); html += cardHTML(c, 'none'); }
-  document.getElementById("drawResult").innerHTML = html;
-}
+// ガチャ
+function drawCard(){ if(money<100)return; money-=100; let c=createCard(); stock.push(c); document.getElementById("drawResult").innerHTML=cardHTML(c,'none'); updateStatus(); }
+function draw10(){ if(money<900)return; money-=900; let h=""; for(let i=0;i<10;i++){let c=createCard();stock.push(c);h+=cardHTML(c,'none');} document.getElementById("drawResult").innerHTML=h; updateStatus(); }
 
-// --- デッキ管理 ---
-function showStock(){
-  document.getElementById("deckCount").innerText = deck.length;
-  document.getElementById("deckArea").innerHTML = deck.map(c=>cardHTML(c,'deck')).join("");
-  document.getElementById("stockList").innerHTML = stock.map(c=>cardHTML(c,'stock')).join("");
-}
-function addToDeck(id){
-  if(deck.length >= 20) return alert("20枚まで");
-  let idx = stock.findIndex(c=>c.id == id);
-  if(idx !== -1) deck.push(stock.splice(idx, 1)[0]);
-  showStock();
-}
-function removeFromDeck(id){
-  let idx = deck.findIndex(c=>c.id == id);
-  if(idx !== -1) stock.push(deck.splice(idx, 1)[0]);
-  showStock();
-}
-
-// --- バトル (前回のロジック流用) ---
-let pLife, eLife, bHand, bZone, bBench, eZone, bDeck, eDeck, hasAttacked, selectedCardId;
-function startBattle(d){
-  if(deck.length < 20) return alert("20枚デッキを組んでください");
-  pLife=5000; eLife=5000; bZone=[]; bBench=[]; eZone=[]; bHand=[]; hasAttacked=false;
-  bDeck = JSON.parse(JSON.stringify(deck)).sort(()=>Math.random()-0.5);
-  eDeck = [];
-  let elv = d==='easy'?1 : d==='normal'?15 : 40;
-  for(let i=0; i<30; i++) { let ec = createCardFromPool(); ec.level=elv; ec.hp=ec.maxHp=elv*500+500; eDeck.push(ec); }
-  for(let i=0; i<5; i++) bHand.push(bDeck.pop());
-  eZone.push(eDeck.pop());
-  showScreen("battle"); updateBattleUI();
-}
-function updateBattleUI(){
-  document.getElementById("pLife").innerText = pLife;
-  document.getElementById("eLife").innerText = eLife;
-  document.getElementById("hand").innerHTML = bHand.map(c=>cardHTML(c, 'hand')).join("");
-  document.getElementById("battleZone").innerHTML = bZone.map(c=>cardHTML(c, 'battle')).join("");
-  document.getElementById("benchZone").innerHTML = bBench.map(c=>cardHTML(c, 'none')).join("");
-  document.getElementById("enemyZone").innerHTML = eZone.map(c=>cardHTML(c, 'none')).join("");
-}
-function openActionPanel(id){ selectedCardId = id; document.getElementById("actionPanel").style.display="block"; }
+// バトルロジック
+let selectedCardId;
+function startBattle(d){ if(deck.length<20)return alert("デッキ20枚必要"); diff=d; pLife=5000; eLife=5000; bZone=[]; bBench=[]; eZone=[]; bHand=[]; hasAttacked=false; bDeck = JSON.parse(JSON.stringify(deck)).sort(()=>Math.random()-0.5); for(let i=0;i<5;i++) bHand.push(bDeck.pop()); eZone.push(createCard(d==='hard'?2:1)); showScreen('battle'); updateBattleUI(); }
+function updateBattleUI(){ document.getElementById("pLife").innerText=pLife; document.getElementById("eLife").innerText=eLife; document.getElementById("hand").innerHTML=bHand.map(c=>cardHTML(c,'hand')).join(""); document.getElementById("battleZone").innerHTML=bZone.map(c=>cardHTML(c,'battle')).join(""); document.getElementById("benchZone").innerHTML=bBench.map(c=>cardHTML(c,'none')).join(""); document.getElementById("enemyZone").innerHTML=eZone.map(c=>cardHTML(c,'none')).join(""); }
+function confirmPlay(t){ let i=bHand.findIndex(x=>x.id==selectedCardId); let c=bHand.splice(i,1)[0]; if(t==='battle'&&bZone.length<2)bZone.push(c); else if(t==='bench'&&bBench.length<3)bBench.push(c); else bHand.push(c); document.getElementById("actionPanel").style.display="none"; updateBattleUI(); }
 function cancelPlay(){ document.getElementById("actionPanel").style.display="none"; }
-function confirmPlay(target){
-  let idx = bHand.findIndex(c=>c.id == selectedCardId);
-  let card = bHand.splice(idx, 1)[0];
-  if(target==='battle' && bZone.length < 2) bZone.push(card);
-  else if(target==='bench' && bBench.length < 3) bBench.push(card);
-  else bHand.push(card);
-  cancelPlay(); updateBattleUI();
-}
-function attack(id){
-  if(hasAttacked) return;
-  let atk = bZone.find(c=>c.id == id);
-  let dmg = atk.level * 200 + atk.stars * 200;
-  if(eZone.length > 0) { eZone[0].hp -= dmg; if(eZone[0].hp<=0) eZone.shift(); if(eZone.length==0 && eDeck.length>0) eZone.push(eDeck.pop()); }
-  else eLife -= dmg;
-  hasAttacked = true; updateBattleUI();
-  if(eLife<=0) { alert("勝利！"); money+=300; updateStatus(); showScreen("battleSelect"); }
-}
-function passTurn(){
-  if(eZone.length > 0){
-    let dmg = eZone[0].level * 200;
-    if(bZone.length > 0) { bZone[0].hp -= dmg; if(bZone[0].hp<=0) bZone.shift(); }
-    else pLife -= dmg;
-  }
-  if(pLife<=0 || (bZone.length==0 && bBench.length==0)) { alert("敗北..."); showScreen("battleSelect"); }
-  if(bDeck.length>0) bHand.push(bDeck.pop());
-  while(bZone.length < 2 && bBench.length > 0) bZone.push(bBench.shift());
-  hasAttacked = false; updateBattleUI();
-}
-
-// --- 補充 ---
-function getCoin(){ money += 500; updateStatus(); document.getElementById("coinAlert").innerText = "500コイン獲得！"; }
-function getNotes(){ notes += 50; updateStatus(); document.getElementById("coinAlert").innerText = "50音符獲得！"; }
+function attack(id){ if(hasAttacked)return; let c=bZone.find(x=>x.id==id); let d=c.level*200+c.stars*200; if(eZone.length>0){eZone[0].hp-=d;if(eZone[0].hp<=0)eZone.shift();}else eLife-=d; hasAttacked=true; updateBattleUI(); if(eLife<=0)finishBattle("WIN"); }
+function passTurn(){ if(eZone.length>0){ let d=eZone[0].level*200; if(bZone.length>0){bZone[0].hp-=d;if(bZone[0].hp<=0)bZone.shift();}else pLife-=d; } if(pLife<=0||(bZone.length==0&&bBench.length==0))finishBattle("LOSE"); if(bDeck.length>0)bHand.push(bDeck.pop()); while(bZone.length<2&&bBench.length>0)bZone.push(bBench.shift()); hasAttacked=false; updateBattleUI(); }
+function showStock(){ document.getElementById("deckCount").innerText=deck.length; document.getElementById("deckArea").innerHTML=deck.map(c=>cardHTML(c,'deck')).join(""); document.getElementById("stockList").innerHTML=stock.map(c=>cardHTML(c,'stock')).join(""); }
 
 updateStatus();
 </script>
