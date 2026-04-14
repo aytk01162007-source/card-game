@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ボイシング・カードバトル - 完全版</title>
+  <title>ボイシング・カードバトル - DX完全版</title>
   <style>
     body { margin: 0; font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; overflow-x: hidden; }
     
@@ -38,12 +38,13 @@
     .treasure:hover { transform: scale(1.1); }
     
     #actionPanel { display: none; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.95); padding: 20px; border-radius: 15px; border: 3px solid gold; z-index: 200; box-shadow: 0 0 40px #000; }
+    .zone-label { font-size: 0.75em; color: #aaa; margin: 5px 0 -5px; font-weight: bold; }
   </style>
 </head>
 <body>
 
 <div id="status-bar">
-  <div class="status-item">💰 <span id="val-money">900</span></div>
+  <div class="status-item">💰 <span id="val-money">2000</span></div>
   <div class="status-item">🎶 <span id="val-notes">50</span></div>
   <div class="status-item">🔑 <span id="val-keys">0</span></div>
 </div>
@@ -55,7 +56,7 @@
   <button onclick="showScreen('shop')">ショップ</button>
 </div>
 
-<!-- ガチャ画面 -->
+<!-- ガチャ -->
 <div id="draw" class="screen active">
   <h2>通常ガチャ</h2>
   <button onclick="drawCard()">1回（100コイン）</button>
@@ -63,16 +64,16 @@
   <div id="drawResult" class="card-container"></div>
 </div>
 
-<!-- デッキ編成画面 -->
+<!-- デッキ編成 -->
 <div id="stock" class="screen">
-  <p style="font-size:0.7em;">※長押し(右クリ)で強化画面</p>
+  <p style="font-size:0.7em;">※カード長押しで強化画面</p>
   <h2>デッキ (<span id="deckCount">0</span>/20)</h2>
   <div id="deckArea" class="card-container"></div>
   <h2>所持カード一覧</h2>
   <div id="stockList" class="card-container"></div>
 </div>
 
-<!-- 強化画面 -->
+<!-- 強化 -->
 <div id="upgrade" class="screen">
   <h2>カード強化</h2>
   <div id="upgradeCard" style="display: flex; justify-content: center; margin-bottom: 15px;"></div>
@@ -81,33 +82,41 @@
   <button onclick="showScreen('stock')">戻る</button>
 </div>
 
-<!-- 対戦選択画面 -->
+<!-- 対戦選択 -->
 <div id="battleSelect" class="screen">
   <h2>対戦相手を選択</h2>
-  <button onclick="startBattle('easy')">初級 (鍵率15%)</button>
-  <button onclick="startBattle('normal')">中級 (鍵率30%)</button>
-  <button onclick="startBattle('hard')">上級 (鍵率50%)</button>
-  <p style="color: #ff4444; font-size: 0.8em;">【ルール】場(バトル・待機)が全滅した時点で負けとなります</p>
+  <button onclick="startBattle('easy')">初級 (鍵15%)</button>
+  <button onclick="startBattle('normal')">中級 (鍵30%)</button>
+  <button onclick="startBattle('hard')">上級 (鍵50%)</button>
+  <p style="color: #ff4444; font-size: 0.8em;">【全滅ルール】場のカードがなくなると負けです。待機ゾーンのカードはタップでバトルゾーンに出せます。</p>
 </div>
 
-<!-- 対戦中画面 -->
+<!-- 対戦中 -->
 <div id="battle" class="screen">
-  <div style="background: #000; padding: 10px; display: flex; justify-content: space-around;">
+  <div style="background: #000; padding: 10px; display: flex; justify-content: space-around; border-bottom: 1px solid #444;">
     <div style="color:#ff6666">BOTライフ: <span id="eLife">5000</span></div>
     <div style="color:#66ff66">自分ライフ: <span id="pLife">5000</span></div>
   </div>
-  <div style="font-size: 0.7em; color: #aaa; margin-top: 5px;">相手バトルゾーン</div>
+  
+  <div class="zone-label">BOT：待機ゾーン</div>
+  <div id="enemyBenchZone" class="card-container" style="min-height: 100px; transform: scale(0.9);"></div>
+  
+  <div class="zone-label">BOT：バトルゾーン</div>
   <div id="enemyZone" class="card-container"></div>
-  <div style="font-size: 0.7em; color: #aaa;">自分バトルゾーン (タップで攻撃)</div>
+  
+  <div class="zone-label">自分：バトルゾーン (タップで攻撃)</div>
   <div id="battleZone" class="card-container"></div>
-  <div style="font-size: 0.7em; color: #aaa;">待機ゾーン</div>
+  
+  <div class="zone-label">自分：待機ゾーン (タップで前線へ)</div>
   <div id="benchZone" class="card-container"></div>
-  <div style="font-size: 0.7em; color: #aaa;">手札</div>
+  
+  <div class="zone-label">手札</div>
   <div id="hand" class="card-container"></div>
+  
   <button onclick="passTurn()" style="background:#822; width:90%; padding: 15px; margin: 10px;">ターン終了</button>
 </div>
 
-<!-- ショップ＆ミニゲーム -->
+<!-- ショップ -->
 <div id="shop" class="screen">
   <div class="shop-section">
     <h2>🎶 音符ミニゲーム</h2>
@@ -126,21 +135,20 @@
   </div>
   <div class="shop-section">
     <h2>💎 音符ガチャ</h2>
-    <p style="font-size:0.8em;">消費: 20音符</p>
-    <button onclick="drawNoteGacha()" style="border-color: aqua;">音符ガチャを回す</button>
+    <button onclick="drawNoteGacha()" style="border-color: aqua;">音符20個で回す</button>
   </div>
 </div>
 
-<!-- アクションパネル -->
+<!-- 配置パネル -->
 <div id="actionPanel">
   <div id="selectedCardName" style="margin-bottom:10px; font-weight:bold; color: gold;"></div>
-  <button onclick="confirmPlay('battle')" style="background:#282;">前衛へ</button>
-  <button onclick="confirmPlay('bench')" style="background:#228;">後衛へ</button><br>
+  <button onclick="confirmPlay('battle')" style="background:#282;">前衛(バトル)へ</button>
+  <button onclick="confirmPlay('bench')" style="background:#228;">後衛(待機)へ</button><br>
   <button onclick="cancelPlay()" style="background:#444; margin-top:15px;">キャンセル</button>
 </div>
 
 <script>
-// --- キャラクターマスターデータ ---
+// キャラクターデータ
 const cardMaster = {
   "りうら": [{t:"｢いれいす｣",s:1},{t:"｢恋の約束｣",s:2},{t:"｢3分ちょい！2023ver.｣",s:3},{t:"｢星降るフェアリーテイル｣",s:3}],
   "-hotoke-": [{t:"｢いれいす｣",s:1},{t:"｢恋の約束｣",s:2},{t:"｢3分ちょい！2023ver.｣",s:3},{t:"｢星降るフェアリーテイル｣",s:3}],
@@ -173,11 +181,11 @@ const cardMaster = {
   "リンドウネイロ": [{t:"｢ブラフラ｣",s:1},{t:"｢傷明｣",s:2},{t:"｢アラサガシ｣",s:3},{t:"｢軌道線｣",s:3}],
 };
 
-// --- ゲーム変数 ---
-let money = 900, notes = 50, keys = 0;
+// ゲーム変数
+let money = 2000, notes = 50, keys = 0;
 let stock = [], deck = [];
 let currentUpgradeCard = null, pressTimer;
-let pLife, eLife, bHand, bZone, bBench, eZone, bDeck, eDeck, hasAttacked, selectedCardId, currentDiff;
+let pLife, eLife, bHand, bZone, bBench, eZone, eBench, bDeck, eDeck, hasAttacked, selectedCardId, currentDiff;
 let mgPos = 0, mgDir = 4, mgActive = false, mgRequestId;
 
 window.onload = () => { updateStatus(); };
@@ -192,7 +200,6 @@ function showScreen(id) {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   if (id === 'stock') showStock();
-  if (id === 'shop') mgActive = false; 
 }
 
 function createCard(minStar = 1) {
@@ -231,6 +238,15 @@ function cardClick(id, type) {
     let c = bHand.find(x => x.id == id);
     document.getElementById("selectedCardName").innerText = c.title + c.name;
     document.getElementById("actionPanel").style.display = "block";
+  } else if (type === 'bench') {
+    // 待機ゾーンからバトルゾーンへ移動
+    if (bZone.length < 2) {
+      let idx = bBench.findIndex(x => x.id == id);
+      bZone.push(bBench.splice(idx, 1)[0]);
+      updateBattleUI();
+    } else {
+      alert("バトルゾーンがいっぱいです(最大2枚)");
+    }
   } else if (type === 'battle') {
     attack(id);
   }
@@ -238,7 +254,7 @@ function cardClick(id, type) {
 
 function startPress(id, immediate = false) {
   const openUp = () => {
-    let c = stock.find(x => x.id == id) || deck.find(x => x.id == id) || bHand?.find(x => x.id == id);
+    let c = stock.find(x => x.id == id) || deck.find(x => x.id == id) || bHand?.find(x => x.id == id) || bBench?.find(x => x.id == id);
     if (c) { currentUpgradeCard = c; showScreen('upgrade'); updateUpgradeInfo(); }
   };
   if (immediate) return openUp();
@@ -314,7 +330,7 @@ function drawNoteGacha() {
 function startBattle(d) {
   if (deck.length < 20) return alert("デッキ20枚必要");
   currentDiff = d; pLife = 5000; eLife = 5000;
-  bZone = []; bBench = []; eZone = []; bHand = []; hasAttacked = false;
+  bZone = []; bBench = []; eZone = []; eBench = []; bHand = []; hasAttacked = false;
   bDeck = JSON.parse(JSON.stringify(deck)).sort(() => Math.random() - 0.5);
   eDeck = [];
   let eLv = d == 'easy' ? 1 : (d == 'normal' ? 15 : 40);
@@ -325,12 +341,24 @@ function startBattle(d) {
     eDeck.push(ec);
   }
   for (let i = 0; i < 5; i++) bHand.push(bDeck.pop());
-  refillEnemy(); showScreen('battle'); updateBattleUI();
+  
+  // BOTの初期配置 (バトル2枚、ベンチ3枚)
+  for(let i=0; i<2; i++) if(eDeck.length>0) eZone.push(eDeck.pop());
+  for(let i=0; i<3; i++) if(eDeck.length>0) eBench.push(eDeck.pop());
+  
+  showScreen('battle');
+  updateBattleUI();
 }
 
 function refillEnemy() {
-  let maxE = currentDiff == 'easy' ? 1 : 2;
-  while (eZone.length < maxE && eDeck.length > 0) { eZone.push(eDeck.pop()); }
+  // BOTの待機からバトルへの移動
+  while (eZone.length < 2 && eBench.length > 0) {
+    eZone.push(eBench.shift());
+  }
+  // 山札から待機への補充
+  while (eBench.length < 3 && eDeck.length > 0) {
+    eBench.push(eDeck.pop());
+  }
 }
 
 function updateBattleUI() {
@@ -338,10 +366,13 @@ function updateBattleUI() {
   document.getElementById("pLife").innerText = pLife;
   document.getElementById("hand").innerHTML = bHand.map(c => cardHTML(c, 'hand')).join("");
   document.getElementById("battleZone").innerHTML = bZone.map(c => cardHTML(c, 'battle')).join("");
-  document.getElementById("benchZone").innerHTML = bBench.map(c => cardHTML(c, 'none')).join("");
+  document.getElementById("benchZone").innerHTML = bBench.map(c => cardHTML(c, 'bench')).join("");
   document.getElementById("enemyZone").innerHTML = eZone.map(c => cardHTML(c, 'none')).join("");
+  document.getElementById("enemyBenchZone").innerHTML = eBench.map(c => cardHTML(c, 'none')).join("");
+  
+  // 全滅判定
   if (pLife > 0 && eLife > 0 && bZone.length === 0 && bBench.length === 0 && bHand.length === 0 && bDeck.length === 0) {
-    finishBattle("LOSE", "カード全滅");
+    finishBattle("LOSE", "全滅しました。");
   }
 }
 
@@ -362,26 +393,38 @@ function attack(id) {
   let dmg = atkCard.level * 200 + atkCard.stars * 200;
   if (eZone.length > 0) {
     eZone[0].hp -= dmg;
-    if (eZone[0].hp <= 0) { alert("撃破！"); eZone.shift(); refillEnemy(); }
+    if (eZone[0].hp <= 0) { alert("撃破！"); eZone.shift(); }
   } else { eLife -= dmg; }
-  hasAttacked = true; updateBattleUI();
-  if (eLife <= 0 || (eZone.length === 0 && eDeck.length === 0)) finishBattle("WIN", "勝利");
+  hasAttacked = true;
+  updateBattleUI();
+  if (eLife <= 0 || (eZone.length === 0 && eBench.length === 0 && eDeck.length === 0)) finishBattle("WIN", "勝利！");
 }
 
 function passTurn() {
+  // BOTの補充
   refillEnemy();
+  
+  // BOTの攻撃
   if (eZone.length > 0) {
     let dmg = eZone[0].level * 180 + eZone[0].stars * 100;
     if (bZone.length > 0) {
       bZone[0].hp -= dmg;
-      if (bZone[0].hp <= 0) { alert("倒された"); bZone.shift(); }
+      if (bZone[0].hp <= 0) { alert("倒されました"); bZone.shift(); }
     } else { pLife -= dmg; }
   }
+  
+  // 判定
   if (pLife <= 0) return finishBattle("LOSE", "ライフ消滅");
   if (bZone.length === 0 && bBench.length === 0 && bDeck.length === 0 && bHand.length === 0) return finishBattle("LOSE", "全滅");
+
+  // 自分のターン開始
   if (bDeck.length > 0) bHand.push(bDeck.pop());
-  while (bZone.length < 2 && bBench.length > 0) bZone.push(bBench.shift());
-  hasAttacked = false; updateBattleUI();
+  
+  // 手動移動になったので、ここでは自動補充しない
+  
+  hasAttacked = false;
+  alert("自分のターン！待機ゾーンのカードをタップで出せます。");
+  updateBattleUI();
 }
 
 function finishBattle(res, msg) {
