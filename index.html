@@ -157,6 +157,20 @@ let difficulty = "easy";
 let currentCardIndex = null;
 　let deck = [];
 
+    // ===== 対戦用データ =====
+let playerLife = 5000;
+let enemyLife = 5000;
+
+let deck = [];
+let hand = [];
+let battleZone = [];
+let benchZone = [];
+let enemyZone = [];
+
+let hasAttacked = false;
+  
+
+
 // キャラ一覧
 const characters = [
 "りうら","-hotoke-","初兎","ないこ","If","悠佑",
@@ -334,19 +348,6 @@ function createBotCard(){
   return c;
 }
 
-// バトル
-function startBattle(){
-  // ===== 対戦用データ =====
-let playerLife = 5000;
-let enemyLife = 5000;
-
-let deck = [];
-let hand = [];
-let battleZone = [];
-let benchZone = [];
-let enemyZone = [];
-
-let hasAttacked = false;
 
 // ===== 対戦開始 =====
 function startBattle(){
