@@ -2,10 +2,14 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ボイシング・カードバトル</title>
+  <title>ボイシング・カードバトル - 育成版</title>
   <style>
     body { margin: 0; font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; }
-    #money { position: fixed; top: 10px; left: 10px; z-index: 100; background: rgba(0,0,0,0.8); padding: 8px 15px; border-radius: 5px; border: 1px solid gold; color: gold; font-weight: bold; }
+    
+    /* 右上のステータス表示 */
+    #status-bar { position: fixed; top: 10px; left: 10px; z-index: 100; display: flex; gap: 10px; }
+    .status-item { background: rgba(0,0,0,0.8); padding: 8px 15px; border-radius: 5px; border: 1px solid gold; color: gold; font-weight: bold; font-size: 14px; }
+    
     #menu { position: fixed; top: 10px; right: 10px; z-index: 100; }
     button { margin: 5px; padding: 10px 15px; cursor: pointer; background: #333; color: white; border: 1px solid #777; border-radius: 4px; font-weight: bold; }
     button:hover { background: #555; border-color: #ccc; }
@@ -13,49 +17,50 @@
     .screen { display: none; padding-top: 70px; padding-bottom: 50px; }
     .active { display: block; }
     
-    /* カードコンテナ */
     .card-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-height: 150px; padding: 10px; background: rgba(255,255,255,0.03); margin: 10px; border-radius: 10px; border: 1px solid #333; }
     
     /* カードデザイン */
-    .card { width: 100px; height: 145px; border: 2px solid #ccc; border-radius: 8px; background: #222; cursor: pointer; font-size: 10px; display: flex; flex-direction: column; justify-content: space-between; padding: 6px; box-sizing: border-box; position: relative; overflow: hidden; }
-    .card .title { font-size: 9px; color: #aaa; margin-bottom: 4px; height: 30px; overflow: hidden; }
-    .card .name { font-weight: bold; font-size: 11px; margin-bottom: 5px; }
+    .card { width: 100px; height: 145px; border: 2px solid #ccc; border-radius: 8px; background: #222; cursor: pointer; font-size: 10px; display: flex; flex-direction: column; justify-content: space-between; padding: 6px; box-sizing: border-box; position: relative; overflow: hidden; user-select: none; }
+    .card .title { font-size: 9px; color: #aaa; height: 30px; overflow: hidden; }
+    .card .name { font-weight: bold; font-size: 11px; }
     .card .stars { color: gold; font-size: 12px; }
     
-    /* レアリティ別枠 */
     .star1 { border-color: #eee; }
     .star2 { border-color: #4488ff; box-shadow: 0 0 5px #4488ff; }
     .star3 { border-color: #ffcc00; box-shadow: 0 0 10px rgba(255,204,0,0.7); background: linear-gradient(135deg, #222 0%, #3a3a00 100%); }
-    .star3::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent); transform: rotate(45deg); animation: shine 3s infinite; }
-    @keyframes shine { 0% { left: -100%; } 100% { left: 100%; } }
-
+    
     .disabled { opacity: 0.5; filter: grayscale(1); cursor: default; }
 
     /* バトル */
     .battle-info { background: #000; padding: 15px; display: flex; justify-content: space-around; font-weight: bold; font-size: 1.1em; border-bottom: 2px solid #444; }
-    .zone-label { font-size: 0.8em; color: #ffcc00; margin-top: 15px; font-weight: bold; letter-spacing: 1px; }
+    .zone-label { font-size: 0.8em; color: #ffcc00; margin-top: 15px; font-weight: bold; }
 
     /* 操作パネル */
     #actionPanel { display: none; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.95); padding: 25px; border-radius: 15px; border: 3px solid gold; z-index: 200; box-shadow: 0 0 40px rgba(0,0,0,1); }
-    .coin-btn { font-size: 1.5em; padding: 20px 40px; background: gold; color: black; border: none; border-radius: 10px; box-shadow: 0 5px 0 #b8860b; }
-    .coin-btn:active { transform: translateY(3px); box-shadow: none; }
+    .coin-btn { font-size: 1.2em; padding: 15px 30px; background: #444; color: white; border: 2px solid gold; border-radius: 10px; margin: 10px; width: 220px; }
+    .coin-btn:active { transform: scale(0.98); }
+
+    .cost-info { margin: 10px; font-size: 0.9em; color: #ddd; }
+    .cost-info span { color: gold; font-weight: bold; }
   </style>
 </head>
 <body>
 
-<div id="money">💰 900</div>
+<div id="status-bar">
+  <div class="status-item">💰 <span id="val-money">900</span></div>
+  <div class="status-item">🎶 <span id="val-notes">50</span></div>
+</div>
 
 <div id="menu">
   <button onclick="showScreen('draw')">ガチャ</button>
   <button onclick="showScreen('stock')">デッキ編成</button>
   <button onclick="showScreen('battleSelect')">対戦</button>
-  <button onclick="showScreen('coin')">コイン補充</button>
+  <button onclick="showScreen('coin')">素材補充</button>
 </div>
 
 <!-- ガチャ -->
 <div id="draw" class="screen active">
   <h2>ガチャ</h2>
-  <p>★3確率 10% / ★2確率 30% / ★1確率 60%</p>
   <button onclick="drawCard()">1回（100）</button>
   <button onclick="draw10()">10連（900）</button>
   <div id="drawResult" class="card-container"></div>
@@ -63,9 +68,10 @@
 
 <!-- デッキ編成 -->
 <div id="stock" class="screen">
+  <p style="font-size:0.8em; color: #aaa;">※カード長押しで強化画面へ</p>
   <h2>現在のデッキ (<span id="deckCount">0</span>/20)</h2>
   <div id="deckArea" class="card-container"></div>
-  <h2>所持カード (タップでデッキへ / 右クリで強化)</h2>
+  <h2>所持カード (タップでデッキ追加)</h2>
   <div id="stockList" class="card-container"></div>
 </div>
 
@@ -73,37 +79,36 @@
 <div id="upgrade" class="screen">
   <h2>カード強化</h2>
   <div id="upgradeCard" style="display: flex; justify-content: center; margin-bottom: 20px;"></div>
-  <p>100コインでレベルを1上げます (HPが500上昇)</p>
-  <button onclick="levelUp()">強化する！</button>
+  <div class="cost-info">
+    次のレベルに必要な素材:<br>
+    💰 <span id="cost-coin">0</span> コイン / 🎶 <span id="cost-notes">0</span> 音符
+  </div>
+  <button onclick="levelUp()" id="btn-upgrade" style="padding: 15px 30px; background: #262; border-color: gold;">レベルアップ！</button>
   <button onclick="showScreen('stock')">戻る</button>
 </div>
 
 <!-- 対戦選択 -->
 <div id="battleSelect" class="screen">
   <h2>難易度を選択</h2>
-  <button onclick="startBattle('easy')">初級（Lv.1〜）</button>
-  <button onclick="startBattle('normal')">中級（Lv.10〜）</button>
-  <button onclick="startBattle('hard')">上級（Lv.30〜）</button>
-  <p style="color: #ff6666;">※デッキが20枚必要です</p>
+  <button onclick="startBattle('easy')">初級</button>
+  <button onclick="startBattle('normal')">中級</button>
+  <button onclick="startBattle('hard')">上級</button>
 </div>
 
-<!-- 対戦中 -->
+<!-- 対戦画面 -->
 <div id="battle" class="screen">
   <div class="battle-info">
     <div style="color: #ff4444;">ENEMY: <span id="eLife">5000</span></div>
     <div style="color: #44ff44;">YOU: <span id="pLife">5000</span></div>
   </div>
-  <div class="zone-label">相手バトルゾーン</div>
   <div id="enemyZone" class="card-container"></div>
-  <div class="zone-label">自分バトルゾーン (タップで攻撃)</div>
   <div id="battleZone" class="card-container"></div>
-  <div class="zone-label">待機ゾーン</div>
   <div id="benchZone" class="card-container"></div>
-  <div class="zone-label">手札</div>
   <div id="hand" class="card-container"></div>
   <button onclick="passTurn()" style="background: #a22; width: 90%; padding: 15px; margin: 10px;">ターン終了</button>
 </div>
 
+<!-- 操作パネル -->
 <div id="actionPanel">
   <div id="selectedCardName" style="margin-bottom:15px; font-weight:bold; color: gold;"></div>
   <button onclick="confirmPlay('battle')" style="background: #282;">バトルゾーンへ</button>
@@ -111,320 +116,240 @@
   <button onclick="cancelPlay()" style="background:#444; margin-top:15px;">やめる</button>
 </div>
 
-<!-- コイン補充 -->
+<!-- 素材補充 -->
 <div id="coin" class="screen">
-  <h2>コイン無料補充</h2>
-  <p>ボタンを押して戦力を整えよう！</p>
-  <br>
-  <button class="coin-btn" onclick="getCoin()">💰 コインをもらう</button>
+  <h2>アイテムショップ</h2>
+  <p>活動に必要な素材を補充しましょう</p>
+  <button class="coin-btn" onclick="getCoin()">💰 コインを補充する</button><br>
+  <button class="coin-btn" onclick="getNotes()" style="border-color: #4488ff;">🎶 音符(素材)を補充する</button>
   <p id="coinAlert" style="margin-top:20px; color: gold;"></p>
 </div>
 
 <script>
-// --- カードデータベース ---
+// カードマスターデータ
 const cardMaster = {
-  "りうら": [
-    { title: "｢いれいす｣", stars: 1 },
-    { title: "｢恋の約束｣", stars: 2 },
-    { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 },
-    { title: "｢星降るフェアリーテイル｣", stars: 3 }
-  ],
-  "-hotoke-": [
-    { title: "｢いれいす｣", stars: 1 },
-    { title: "｢恋の約束｣", stars: 2 },
-    { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 },
-    { title: "｢星降るフェアリーテイル｣", stars: 3 }
-  ],
-  "初兎": [
-    { title: "｢いれいす｣", stars: 1 },
-    { title: "｢恋の約束｣", stars: 2 },
-    { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 },
-    { title: "｢星降るフェアリーテイル｣", stars: 3 }
-  ],
-  "ないこ": [
-    { title: "｢いれいす｣", stars: 1 },
-    { title: "｢恋の約束｣", stars: 2 },
-    { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 },
-    { title: "｢星降るフェアリーテイル｣", stars: 3 }
-  ],
-  "If": [
-    { title: "｢いれいす｣", stars: 1 },
-    { title: "｢恋の約束｣", stars: 2 },
-    { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 },
-    { title: "｢星降るフェアリーテイル｣", stars: 3 }
-  ],
-  "悠佑": [
-    { title: "｢いれいす｣", stars: 1 },
-    { title: "｢恋の約束｣", stars: 2 },
-    { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 },
-    { title: "｢星降るフェアリーテイル｣", stars: 3 }
-  ],
-  "Coe.": [
-    { title: "｢すたぽら｣", stars: 1 },
-    { title: "｢First Star｣", stars: 2 },
-    { title: "｢おぎゃりたい！えぶりでい｣", stars: 3 },
-    { title: "｢僕らのヒーロー大作戦！｣", stars: 3 }
-  ],
-  "Relu": [
-    { title: "｢すたぽら｣", stars: 1 },
-    { title: "｢First Star｣", stars: 2 },
-    { title: "｢おぎゃりたい！えぶりでい｣", stars: 3 },
-    { title: "｢僕らのヒーロー大作戦！｣", stars: 3 }
-  ],
-  "如月ゆう": [
-    { title: "｢すたぽら｣", stars: 1 },
-    { title: "｢First Star｣", stars: 2 },
-    { title: "｢おぎゃりたい！えぶりでい｣", stars: 3 },
-    { title: "｢僕らのヒーロー大作戦！｣", stars: 3 }
-  ],
-  "くに": [
-    { title: "｢すたぽら｣", stars: 1 },
-    { title: "｢First Star｣", stars: 2 },
-    { title: "｢おぎゃりたい！えぶりでい｣", stars: 3 },
-    { title: "｢僕らのヒーロー大作戦！｣", stars: 3 }
-  ],
-  "こったろ": [
-    { title: "｢すたぽら｣", stars: 1 },
-    { title: "｢First Star｣", stars: 2 },
-    { title: "｢おぎゃりたい！えぶりでい｣", stars: 3 },
-    { title: "｢僕らのヒーロー大作戦！｣", stars: 3 }
-  ],
-  "暇72": [
-    { title: "｢シクフォニ｣", stars: 1 },
-    { title: "｢J0KER×JOK3R｣", stars: 2 },
-    { title: "｢廻｣", stars: 3 },
-    { title: "｢Medi信｣", stars: 3 }
-  ],
-  "雨乃こさめ": [
-    { title: "｢シクフォニ｣", stars: 1 },
-    { title: "｢J0KER×JOK3R｣", stars: 2 },
-    { title: "｢廻｣", stars: 3 },
-    { title: "｢Medi信｣", stars: 3 }
-  ],
-  "いるま": [
-    { title: "｢シクフォニ｣", stars: 1 },
-    { title: "｢J0KER×JOK3R｣", stars: 2 },
-    { title: "｢廻｣", stars: 3 },
-    { title: "｢Medi信｣", stars: 3 }
-  ],
-  "LAN": [
-    { title: "｢シクフォニ｣", stars: 1 },
-    { title: "｢J0KER×JOK3R｣", stars: 2 },
-    { title: "｢廻｣", stars: 3 },
-    { title: "｢Medi信｣", stars: 3 }
-  ],
-  "すち": [
-    { title: "｢シクフォニ｣", stars: 1 },
-    { title: "｢J0KER×JOK3R｣", stars: 2 },
-    { title: "｢廻｣", stars: 3 },
-    { title: "｢Medi信｣", stars: 3 }
-  ],
-  "みこと": [
-    { title: "｢シクフォニ｣", stars: 1 },
-    { title: "｢J0KER×JOK3R｣", stars: 2 },
-    { title: "｢廻｣", stars: 3 },
-    { title: "｢Medi信｣", stars: 3 }
-  ],
-  "ARKHE": [ { title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 } ],
-  "かなめ": [ { title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 } ],
-  "うるみや": [ { title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 } ],
-  "しの": [ { title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 } ],
-  "しゃるろ": [ { title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 } ],
-  "甘夢れむ": [ { title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 } ],
-  "ユエル": [ { title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 } ],
-  "初噛みつき": [ { title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 } ],
-  "天來らいむ": [ { title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 } ],
-  "ひづみ": [ { title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 } ],
-  "らみ": [ { title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 } ],
-  "リンドウネイロ": [ { title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 } ],
+  "りうら": [{ title: "｢いれいす｣", stars: 1 }, { title: "｢恋の約束｣", stars: 2 }, { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 }, { title: "｢星降るフェアリーテイル｣", stars: 3 }],
+  "-hotoke-": [{ title: "｢いれいす｣", stars: 1 }, { title: "｢恋の約束｣", stars: 2 }, { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 }, { title: "｢星降るフェアリーテイル｣", stars: 3 }],
+  "初兎": [{ title: "｢いれいす｣", stars: 1 }, { title: "｢恋の約束｣", stars: 2 }, { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 }, { title: "｢星降るフェアリーテイル｣", stars: 3 }],
+  "ないこ": [{ title: "｢いれいす｣", stars: 1 }, { title: "｢恋の約束｣", stars: 2 }, { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 }, { title: "｢星降るフェアリーテイル｣", stars: 3 }],
+  "If": [{ title: "｢いれいす｣", stars: 1 }, { title: "｢恋の約束｣", stars: 2 }, { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 }, { title: "｢星降るフェアリーテイル｣", stars: 3 }],
+  "悠佑": [{ title: "｢いれいす｣", stars: 1 }, { title: "｢恋の約束｣", stars: 2 }, { title: "｢推しが見つかる3分ちょい！2023ver.｣", stars: 3 }, { title: "｢星降るフェアリーテイル｣", stars: 3 }],
+  "Coe.": [{ title: "｢すたぽら｣", stars: 1 }, { title: "｢First Star｣", stars: 2 }, { title: "｢おぎゃりたい！えぶりでい｣", stars: 3 }, { title: "｢僕らのヒーロー大作戦！｣", stars: 3 }],
+  "Relu": [{ title: "｢すたぽら｣", stars: 1 }, { title: "｢First Star｣", stars: 2 }, { title: "｢おぎゃりたい！えぶりでい｣", stars: 3 }, { title: "｢僕らのヒーロー大作戦！｣", stars: 3 }],
+  "如月ゆう": [{ title: "｢すたぽら｣", stars: 1 }, { title: "｢First Star｣", stars: 2 }, { title: "｢おぎゃりたい！えぶりでい｣", stars: 3 }, { title: "｢僕らのヒーロー大作戦！｣", stars: 3 }],
+  "くに": [{ title: "｢すたぽら｣", stars: 1 }, { title: "｢First Star｣", stars: 2 }, { title: "｢おぎゃりたい！えぶりでい｣", stars: 3 }, { title: "｢僕らのヒーロー大作戦！｣", stars: 3 }],
+  "こったろ": [{ title: "｢すたぽら｣", stars: 1 }, { title: "｢First Star｣", stars: 2 }, { title: "｢おぎゃりたい！えぶりでい｣", stars: 3 }, { title: "｢僕らのヒーロー大作戦！｣", stars: 3 }],
+  "暇72": [{ title: "｢シクフォニ｣", stars: 1 }, { title: "｢J0KER×JOK3R｣", stars: 2 }, { title: "｢廻｣", stars: 3 }, { title: "｢Medi信｣", stars: 3 }],
+  "雨乃こさめ": [{ title: "｢シクフォニ｣", stars: 1 }, { title: "｢J0KER×JOK3R｣", stars: 2 }, { title: "｢廻｣", stars: 3 }, { title: "｢Medi信｣", stars: 3 }],
+  "いるま": [{ title: "｢シクフォニ｣", stars: 1 }, { title: "｢J0KER×JOK3R｣", stars: 2 }, { title: "｢廻｣", stars: 3 }, { title: "｢Medi信｣", stars: 3 }],
+  "LAN": [{ title: "｢シクフォニ｣", stars: 1 }, { title: "｢J0KER×JOK3R｣", stars: 2 }, { title: "｢廻｣", stars: 3 }, { title: "｢Medi信｣", stars: 3 }],
+  "すち": [{ title: "｢シクフォニ｣", stars: 1 }, { title: "｢J0KER×JOK3R｣", stars: 2 }, { title: "｢廻｣", stars: 3 }, { title: "｢Medi信｣", stars: 3 }],
+  "みこと": [{ title: "｢シクフォニ｣", stars: 1 }, { title: "｢J0KER×JOK3R｣", stars: 2 }, { title: "｢廻｣", stars: 3 }, { title: "｢Medi信｣", stars: 3 }],
+  "ARKHE": [{ title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 }],
+  "かなめ": [{ title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 }],
+  "うるみや": [{ title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 }],
+  "しの": [{ title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 }],
+  "しゃるろ": [{ title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 }],
+  "甘夢れむ": [{ title: "｢クロノヴァ｣", stars: 1 }, { title: "｢Antitype｣", stars: 2 }, { title: "｢Order×Chaos｣", stars: 3 }, { title: "｢アラブリマスカ｣", stars: 3 }],
+  "ユエル": [{ title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 }],
+  "初噛みつき": [{ title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 }],
+  "天來らいむ": [{ title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 }],
+  "ひづみ": [{ title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 }],
+  "らみ": [{ title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 }],
+  "リンドウネイロ": [{ title: "｢ブラフラ｣", stars: 1 }, { title: "｢傷明｣", stars: 2 }, { title: "｢アラサガシ｣", stars: 3 }, { title: "｢軌道線｣", stars: 3 }],
 };
 
 let money = 900;
+let notes = 50;
 let stock = [];
 let deck = [];
-let currentCardIndex = null;
+let currentUpgradeCard = null;
 
-// 対戦変数
-let pLife, eLife, bHand, bZone, bench, eZone, bDeck, eDeck;
-let hasAttacked = false;
-let diff = "easy";
-let selectedCardIdx = null;
+// --- 長押し処理用変数 ---
+let pressTimer;
 
-function updateMoney(){ document.getElementById("money").innerText="💰 " + money; }
+function updateStatus(){
+  document.getElementById("val-money").innerText = money;
+  document.getElementById("val-notes").innerText = notes;
+}
+
 function showScreen(id){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   if(id==='stock') showStock();
 }
 
-// ガチャからカード生成
+// --- 長押し・タップの判定 ---
+function handleStart(cardObj) {
+  pressTimer = setTimeout(() => {
+    openUpgrade(cardObj);
+  }, 600); // 0.6秒長押しで強化
+}
+
+function handleEnd() {
+  clearTimeout(pressTimer);
+}
+
+// --- カード生成 ---
 function createCardFromPool(){
   const charNames = Object.keys(cardMaster);
   const charName = charNames[Math.floor(Math.random()*charNames.length)];
   const cardVariations = cardMaster[charName];
-  
-  // レアリティ抽選
   let r = Math.random();
-  let targetStar = 1;
-  if(r < 0.1) targetStar = 3;
-  else if(r < 0.4) targetStar = 2;
-  
-  // 指定の星のカードを探す（なければあるやつから選ぶ）
+  let targetStar = (r < 0.1) ? 3 : (r < 0.4) ? 2 : 1;
   let possible = cardVariations.filter(v => v.stars === targetStar);
   if(possible.length === 0) possible = cardVariations;
-  const variation = possible[Math.floor(Math.random()*possible.length)];
-
-  return {
-    name: charName,
-    title: variation.title,
-    stars: variation.stars,
-    level: 1,
-    hp: variation.stars * 1000,
-    maxHp: variation.stars * 1000
-  };
+  const v = possible[Math.floor(Math.random()*possible.length)];
+  return { id: Date.now() + Math.random(), name: charName, title: v.title, stars: v.stars, level: 1, hp: v.stars * 1000, maxHp: v.stars * 1000 };
 }
 
-function cardHTML(c, i, type){
-  let action = "";
-  if(type==='stock') action = `onclick="addToDeck(${i})"`;
-  if(type==='deck') action = `onclick="removeFromDeck(${i})" oncontextmenu="openUpgrade(${i});return false;"`;
-  if(type==='hand') action = `onclick="openActionPanel(${i})"`;
-  if(type==='battle') action = `onclick="attack(${i})"`;
-  let disClass = (type==='battle' && hasAttacked) ? "disabled" : "";
-
+// --- カードHTML作成 ---
+function cardHTML(c, type){
   let starStr = "★".repeat(c.stars);
+  let onClick = "";
+  if(type === 'stock') onClick = `onclick="addToDeck('${c.id}')"`;
+  if(type === 'deck') onClick = `onclick="removeFromDeck('${c.id}')"`;
+  if(type === 'hand') onClick = `onclick="openActionPanel('${c.id}')"`;
+  if(type === 'battle') onClick = `onclick="attack('${c.id}')"`;
 
-  return `<div class="card star${c.stars} ${disClass}" ${action}>
+  return `<div class="card star${c.stars}" ${onClick} 
+          onmousedown="handleStartByKey('${c.id}')" onmouseup="handleEnd()" 
+          ontouchstart="handleStartByKey('${c.id}')" ontouchend="handleEnd()"
+          oncontextmenu="event.preventDefault(); openUpgradeByKey('${c.id}')">
     <div class="title">${c.title}</div>
     <div class="name">${c.name}</div>
-    <div style="color:#ff6666">HP:${c.hp}</div>
+    <div style="color:#ff6666">HP:${Math.floor(c.hp)}</div>
     <div class="stars">${starStr}</div>
     <div style="font-size:8px;">Lv.${c.level}</div>
   </div>`;
 }
 
-// ガチャ
+// キーによる検索と長押し開始
+function handleStartByKey(id) {
+  let card = stock.find(c=>c.id==id) || deck.find(c=>c.id==id) || bHand.find(c=>c.id==id);
+  if(card) handleStart(card);
+}
+
+// 強化画面へ
+function openUpgrade(card) {
+  currentUpgradeCard = card;
+  showScreen("upgrade");
+  document.getElementById("upgradeCard").innerHTML = cardHTML(card, 'none');
+  
+  // 必要コスト計算 (Lv1->2: 70コイン, 7音符)
+  let costC = card.level * 20 + 50;
+  let costN = card.level * 2 + 5;
+  document.getElementById("cost-coin").innerText = costC;
+  document.getElementById("cost-notes").innerText = costN;
+}
+
+function levelUp(){
+  if(!currentUpgradeCard) return;
+  let costC = currentUpgradeCard.level * 20 + 50;
+  let costN = currentUpgradeCard.level * 2 + 5;
+  
+  if(money < costC || notes < costN) return alert("素材が足りません！");
+  
+  money -= costC;
+  notes -= costN;
+  currentUpgradeCard.level++;
+  currentUpgradeCard.maxHp += 500;
+  currentUpgradeCard.hp = currentUpgradeCard.maxHp;
+  
+  updateStatus();
+  openUpgrade(currentUpgradeCard); // 表示更新
+}
+
+// --- ガチャ ---
 function drawCard(){
-  if(money<100) return alert("コイン不足");
-  money-=100; updateMoney();
-  let c=createCardFromPool(); stock.push(c);
-  document.getElementById("drawResult").innerHTML = cardHTML(c);
+  if(money < 100) return alert("コイン不足");
+  money -= 100; updateStatus();
+  let c = createCardFromPool(); stock.push(c);
+  document.getElementById("drawResult").innerHTML = cardHTML(c, 'none');
 }
 function draw10(){
-  if(money<900) return alert("コイン不足");
-  money-=900; updateMoney();
-  let html="";
-  for(let i=0;i<10;i++){ let c=createCardFromPool(); stock.push(c); html+=cardHTML(c); }
+  if(money < 900) return alert("コイン不足");
+  money -= 900; updateStatus();
+  let html = "";
+  for(let i=0; i<10; i++){ let c = createCardFromPool(); stock.push(c); html += cardHTML(c, 'none'); }
   document.getElementById("drawResult").innerHTML = html;
 }
 
-// デッキ
+// --- デッキ管理 ---
 function showStock(){
   document.getElementById("deckCount").innerText = deck.length;
-  document.getElementById("deckArea").innerHTML = deck.map((c,i)=>cardHTML(c,i,'deck')).join("");
-  document.getElementById("stockList").innerHTML = stock.map((c,i)=>cardHTML(c,i,'stock')).join("");
+  document.getElementById("deckArea").innerHTML = deck.map(c=>cardHTML(c,'deck')).join("");
+  document.getElementById("stockList").innerHTML = stock.map(c=>cardHTML(c,'stock')).join("");
 }
-function addToDeck(i){
-  if(deck.length>=20) return alert("20枚まで");
-  deck.push(stock.splice(i,1)[0]); showStock();
+function addToDeck(id){
+  if(deck.length >= 20) return alert("20枚まで");
+  let idx = stock.findIndex(c=>c.id == id);
+  if(idx !== -1) deck.push(stock.splice(idx, 1)[0]);
+  showStock();
 }
-function removeFromDeck(i){
-  stock.push(deck.splice(i,1)[0]); showStock();
-}
-function openUpgrade(i){
-  currentCardIndex=i; showScreen("upgrade");
-  document.getElementById("upgradeCard").innerHTML = cardHTML(deck[i]);
-}
-function levelUp(){
-  if(money<100) return alert("コイン不足");
-  let c=deck[currentCardIndex];
-  money-=100; c.level++; c.maxHp += 500; c.hp = c.maxHp;
-  updateMoney(); document.getElementById("upgradeCard").innerHTML = cardHTML(c);
+function removeFromDeck(id){
+  let idx = deck.findIndex(c=>c.id == id);
+  if(idx !== -1) stock.push(deck.splice(idx, 1)[0]);
+  showStock();
 }
 
-// バトル
+// --- バトル (前回のロジック流用) ---
+let pLife, eLife, bHand, bZone, bBench, eZone, bDeck, eDeck, hasAttacked, selectedCardId;
 function startBattle(d){
-  if(deck.length<20) return alert("デッキを20枚にしてください");
-  diff = d; pLife=5000; eLife=5000; bZone=[]; bench=[]; eZone=[]; bHand=[];
+  if(deck.length < 20) return alert("20枚デッキを組んでください");
+  pLife=5000; eLife=5000; bZone=[]; bBench=[]; eZone=[]; bHand=[]; hasAttacked=false;
   bDeck = JSON.parse(JSON.stringify(deck)).sort(()=>Math.random()-0.5);
   eDeck = [];
-  let eLv = d==="easy"?1 : d==="normal"?15 : 40;
-  for(let i=0; i<30; i++) {
-    let ec = createCardFromPool();
-    ec.level = eLv + Math.floor(Math.random()*10);
-    ec.maxHp += ec.level * 200; ec.hp = ec.maxHp;
-    eDeck.push(ec);
-  }
-  for(let i=0;i<5;i++) bHand.push(bDeck.pop());
+  let elv = d==='easy'?1 : d==='normal'?15 : 40;
+  for(let i=0; i<30; i++) { let ec = createCardFromPool(); ec.level=elv; ec.hp=ec.maxHp=elv*500+500; eDeck.push(ec); }
+  for(let i=0; i<5; i++) bHand.push(bDeck.pop());
   eZone.push(eDeck.pop());
-  showScreen("battle");
-  updateBattleUI();
+  showScreen("battle"); updateBattleUI();
 }
-
 function updateBattleUI(){
   document.getElementById("pLife").innerText = pLife;
   document.getElementById("eLife").innerText = eLife;
-  document.getElementById("hand").innerHTML = bHand.map((c,i)=>cardHTML(c,i,'hand')).join("");
-  document.getElementById("battleZone").innerHTML = bZone.map((c,i)=>cardHTML(c,i,'battle')).join("");
-  document.getElementById("benchZone").innerHTML = bench.map(c=>cardHTML(c,0,'none')).join("");
-  document.getElementById("enemyZone").innerHTML = eZone.map(c=>cardHTML(c,0,'none')).join("");
-  if(pLife<=0) finishBattle("LOSE", "ライフが0になりました");
-  else if(eLife<=0) finishBattle("WIN", "勝利しました！");
+  document.getElementById("hand").innerHTML = bHand.map(c=>cardHTML(c, 'hand')).join("");
+  document.getElementById("battleZone").innerHTML = bZone.map(c=>cardHTML(c, 'battle')).join("");
+  document.getElementById("benchZone").innerHTML = bBench.map(c=>cardHTML(c, 'none')).join("");
+  document.getElementById("enemyZone").innerHTML = eZone.map(c=>cardHTML(c, 'none')).join("");
 }
-
-function finishBattle(res, msg){
-  let rew = diff==="easy"?100:diff==="normal"?200:300;
-  if(res==="WIN"){ money+=rew; alert(msg + "\n報酬:" + rew); }
-  else { alert(msg); }
-  updateMoney(); showScreen("battleSelect");
-}
-
-function openActionPanel(i){
-  selectedCardIdx = i;
-  document.getElementById("selectedCardName").innerText = bHand[i].title + bHand[i].name;
-  document.getElementById("actionPanel").style.display = "block";
-}
-function cancelPlay(){ document.getElementById("actionPanel").style.display = "none"; }
+function openActionPanel(id){ selectedCardId = id; document.getElementById("actionPanel").style.display="block"; }
+function cancelPlay(){ document.getElementById("actionPanel").style.display="none"; }
 function confirmPlay(target){
-  let card = bHand.splice(selectedCardIdx, 1)[0];
+  let idx = bHand.findIndex(c=>c.id == selectedCardId);
+  let card = bHand.splice(idx, 1)[0];
   if(target==='battle' && bZone.length < 2) bZone.push(card);
-  else if(target==='bench' && bench.length < 3) bench.push(card);
-  else { alert("空きがありません"); bHand.push(card); }
+  else if(target==='bench' && bBench.length < 3) bBench.push(card);
+  else bHand.push(card);
   cancelPlay(); updateBattleUI();
 }
-
-function attack(i){
-  if(hasAttacked) return alert("攻撃は1ターン1回です");
-  let attacker = bZone[i];
-  let damage = (attacker.level * 200) + (attacker.stars * 300);
-  if(eZone.length > 0){
-    eZone[0].hp -= damage;
-    if(eZone[0].hp <= 0) { alert("撃破！"); eZone.shift(); if(eDeck.length>0) eZone.push(eDeck.pop()); }
-  } else { eLife -= damage; }
-  if(eZone.length === 0 && eDeck.length === 0) return finishBattle("WIN", "全滅させました");
+function attack(id){
+  if(hasAttacked) return;
+  let atk = bZone.find(c=>c.id == id);
+  let dmg = atk.level * 200 + atk.stars * 200;
+  if(eZone.length > 0) { eZone[0].hp -= dmg; if(eZone[0].hp<=0) eZone.shift(); if(eZone.length==0 && eDeck.length>0) eZone.push(eDeck.pop()); }
+  else eLife -= dmg;
   hasAttacked = true; updateBattleUI();
+  if(eLife<=0) { alert("勝利！"); money+=300; updateStatus(); showScreen("battleSelect"); }
 }
-
 function passTurn(){
   if(eZone.length > 0){
-    let dmg = (eZone[0].level * 150) + (eZone[0].stars * 200);
-    if(bZone.length > 0){
-      bZone[0].hp -= dmg;
-      if(bZone[0].hp <= 0) bZone.shift();
-    } else { pLife -= dmg; }
+    let dmg = eZone[0].level * 200;
+    if(bZone.length > 0) { bZone[0].hp -= dmg; if(bZone[0].hp<=0) bZone.shift(); }
+    else pLife -= dmg;
   }
-  if(bZone.length === 0 && bench.length === 0) return finishBattle("LOSE", "全滅しました");
-  if(bDeck.length > 0) bHand.push(bDeck.pop());
-  while(bZone.length < 2 && bench.length > 0) bZone.push(bench.shift());
+  if(pLife<=0 || (bZone.length==0 && bBench.length==0)) { alert("敗北..."); showScreen("battleSelect"); }
+  if(bDeck.length>0) bHand.push(bDeck.pop());
+  while(bZone.length < 2 && bBench.length > 0) bZone.push(bBench.shift());
   hasAttacked = false; updateBattleUI();
 }
 
-function getCoin(){
-  money += 100; updateMoney();
-  document.getElementById("coinAlert").innerText = "100コイン補充完了！";
-}
+// --- 補充 ---
+function getCoin(){ money += 500; updateStatus(); document.getElementById("coinAlert").innerText = "500コイン獲得！"; }
+function getNotes(){ notes += 50; updateStatus(); document.getElementById("coinAlert").innerText = "50音符獲得！"; }
 
-updateMoney();
+updateStatus();
 </script>
 </body>
 </html>
