@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>ボイシング・カードバトル - 全11名実装版</title>
+  <title>ボイシング・カードバトル - りうら強化版</title>
   <style>
     body { margin: 0; font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; overflow-x: hidden; }
     #status-bar { position: fixed; top: 10px; left: 10px; z-index: 100; display: flex; gap: 8px; }
@@ -14,8 +14,8 @@
     .active { display: block; }
     .card-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-height: 120px; padding: 10px; background: rgba(255,255,255,0.03); margin: 10px; border-radius: 10px; }
     
-    .card { width: 100px; height: 175px; border: 2px solid #ccc; border-radius: 8px; background: #222; cursor: pointer; font-size: 10px; display: flex; flex-direction: column; justify-content: space-between; padding: 6px; box-sizing: border-box; position: relative; transition: 0.2s; }
-    .card .title { font-size: 8px; color: #aaa; height: 28px; overflow: hidden; line-height: 1.1; }
+    .card { width: 100px; height: 180px; border: 2px solid #ccc; border-radius: 8px; background: #222; cursor: pointer; font-size: 10px; display: flex; flex-direction: column; justify-content: space-between; padding: 6px; box-sizing: border-box; position: relative; transition: 0.2s; }
+    .card .title { font-size: 8px; color: #aaa; height: 35px; overflow: hidden; line-height: 1.1; font-weight: bold; }
     .card .name { font-weight: bold; font-size: 11px; margin: 2px 0; border-bottom: 1px solid #444; }
     .card .stats { display: flex; justify-content: space-around; font-weight: bold; margin-top: 2px; }
     .card .stars { color: gold; font-size: 11px; }
@@ -31,7 +31,7 @@
     #mg-bar { width: 15px; height: 100%; background: #ff4444; position: absolute; left: 0; box-shadow: 0 0 10px red; }
     #mg-target { width: 40px; height: 100%; background: rgba(255,215,0,0.5); position: absolute; left: 130px; border-left: 2px solid gold; border-right: 2px solid gold; }
     #actionPanel { display: none; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.95); padding: 20px; border-radius: 15px; border: 3px solid gold; z-index: 200; box-shadow: 0 0 40px #000; }
-    .skill-text { font-size: 8px; color: #0f0; margin-top: 2px; line-height: 1; height: 35px; overflow: hidden; border-top: 1px solid #333; padding-top: 2px;}
+    .skill-text { font-size: 8px; color: #0f0; margin-top: 2px; line-height: 1.1; height: 45px; overflow: hidden; border-top: 1px solid #333; padding-top: 2px; text-align: left;}
   </style>
 </head>
 <body>
@@ -49,46 +49,55 @@
   <button onclick="showScreen('shop')">ショップ</button>
 </div>
 
-<!-- 画面構成 -->
+<!-- ガチャ画面 -->
 <div id="draw" class="screen active">
-  <h2>通常ガチャ</h2>
+  <h2>ガチャ</h2>
   <button onclick="drawCard()">1回（100）</button>
   <button onclick="draw10()">10連（900）</button>
   <div id="drawResult" class="card-container"></div>
 </div>
 
+<!-- デッキ編成 -->
 <div id="stock" class="screen">
-  <h2>デッキ編成 (<span id="deckCount">0</span>/20)</h2>
+  <h2>デッキ (<span id="deckCount">0</span>/20)</h2>
   <div id="deckArea" class="card-container"></div>
-  <h2>所持カード一覧（長押しで強化）</h2>
+  <h2>所持カード（長押しで強化）</h2>
   <div id="stockList" class="card-container"></div>
 </div>
 
+<!-- 強化画面 -->
 <div id="upgrade" class="screen">
-  <h2>カード強化</h2>
+  <h2>カード強化 (最大Lv.100)</h2>
   <div id="upgradeCard" style="display: flex; justify-content: center; margin-bottom: 15px;"></div>
   <div id="upgradeCost" style="font-size: 1.1em; color: gold; font-weight: bold; margin-bottom: 15px;"></div>
   <button onclick="levelUp()" id="upBtn" style="background: #262; padding: 15px 40px;">レベルアップ！</button>
   <button onclick="showScreen('stock')">戻る</button>
 </div>
 
+<!-- 対戦選択 -->
 <div id="battleSelect" class="screen">
-  <h2>対戦選択</h2>
+  <h2>対戦相手</h2>
   <button onclick="startBattle('easy')">初級</button>
   <button onclick="startBattle('normal')">中級</button>
   <button onclick="startBattle('hard')">上級</button>
 </div>
 
+<!-- バトル画面 -->
 <div id="battle" class="screen">
   <div id="battleUI" style="background: #000; padding: 10px; display: flex; justify-content: space-around; border-bottom: 2px solid #444;">
     <div onclick="selectTarget('direct')" style="color:#ff6666; cursor:pointer;">BOT HP: <span id="eLife">5000</span> <span id="directMark" style="color:yellow; display:none;">●狙える</span></div>
     <div style="color:#66ff66">YOU HP: <span id="pLife">5000</span></div>
   </div>
+  <div class="zone-label" style="font-size:10px; color:#aaa;">BOT 待機</div>
   <div id="enemyBenchZone" class="card-container" style="min-height: 60px; transform: scale(0.85);"></div>
+  <div class="zone-label" style="font-size:10px; color:#aaa;">BOT バトル</div>
   <div id="enemyZone" class="card-container"></div>
   <hr>
+  <div class="zone-label" style="font-size:10px; color:#aaa;">自分 バトル (攻撃準備: 自分のカードをタップ)</div>
   <div id="battleZone" class="card-container"></div>
+  <div class="zone-label" style="font-size:10px; color:#aaa;">自分 待機 (タップでバトルゾーンへ)</div>
   <div id="benchZone" class="card-container"></div>
+  <div class="zone-label" style="font-size:10px; color:#aaa;">手札</div>
   <div id="hand" class="card-container"></div>
   <button onclick="passTurn()" style="background:#822; width:90%; padding: 15px; margin: 10px;">ターン終了</button>
 </div>
@@ -104,48 +113,48 @@
 
 <div id="actionPanel">
   <div id="selName" style="margin-bottom:10px; font-weight:bold; color: gold;"></div>
-  <button onclick="confirmPlay('battle')" style="background:#282;">前衛へ</button>
-  <button onclick="confirmPlay('bench')" style="background:#228;">後衛へ</button><br>
-  <button onclick="cancelPlay()" style="background:#444; margin-top:10px;">キャンセル</button>
+  <button onclick="confirmPlay('battle')" style="background:#282;">バトルゾーンへ</button>
+  <button onclick="confirmPlay('bench')" style="background:#228;">待機ゾーンへ</button><br>
+  <button onclick="cancelPlay()" style="background:#444; margin-top:15px;">キャンセル</button>
 </div>
 
 <script>
-// --- カードマスター（いれいす & すたぽら） ---
+// --- カードマスター ---
 const cardMaster = {
   "りうら": [
     {t:"｢いれいす｣", s:1, hp:1200, atk:400, sid:"none", desc:""},
-    {t:"｢恋の約束｣", s:2, hp:2200, atk:600, sid:"riura_s2", desc:"相手ドロー時ダメージ"},
-    {t:"｢3分ちょい！2023ver.｣", s:3, hp:3600, atk:900, sid:"riura_s3", desc:"同名カードでATK強化"},
-    {t:"｢星降るフェアリーテイル｣", s:3, hp:4000, atk:850, sid:"riura_s3_2", desc: "相手防御減少"}
+    {t:"｢恋の約束｣", s:2, hp:2200, atk:600, sid:"riura_s2", desc:"相手ドロー毎にダメージ\nLv50:50 / MAX:100"},
+    {t:"｢推しが見つかる3分ちょい！2023ver.｣", s:3, hp:3600, atk:900, sid:"riura_s3", desc:"味方に同タイトルがいれば攻撃UP\nLv50:+500 / MAX:+1000"},
+    {t:"｢星降るフェアリーテイル｣", s:3, hp:4000, atk:850, sid:"riura_s3_2", desc: "出た時に敵HP減少\nバトル時:MAX-800 / 待機時:MAX-500"}
   ],
-  "-hotoke-": [
+"-hotoke-": [
     {t:"｢いれいす｣", s:1, hp:1100, atk:380, sid:"none", desc:""},
-    {t:"｢恋の約束｣", s:2, hp:2000, atk:550, sid:"hotoke_s2", desc:"出した時ドロー"},
-    {t:"｢3分ちょい！2023ver.｣", s:3, hp:3400, atk:800, sid:"hotoke_s3", desc:"毎ターン自分回復"},
-    {t:"｢星降るフェアリーテイル｣", s:3, hp:3800, atk:750, sid:"hotoke_s3_2", desc: "同名で防御強化"}
+    {t:"｢恋の約束｣", s:2, hp:2000, atk:550, sid:"hotoke_s2", desc:"出した時に手札を追加ドロー\n(Lv50:2枚 / MAX:3枚)"},
+    {t:"｢推しが見つかる3分ちょい！2023ver.｣", s:3, hp:3400, atk:800, sid:"hotoke_s3", desc:"毎自ターン開始時ライフ回復\n(Lv50:100 / MAX:200)"},
+    {t:"｢星降るフェアリーテイル｣", s:3, hp:3800, atk:750, sid:"hotoke_s3_2", desc: "待機時、前衛2人が同名なら\nHPを最大1500強化"}
   ],
-  "初兎": [
+"初兎": [
     {t:"｢いれいす｣", s:1, hp:1200, atk:450, sid:"none", desc:""},
-    {t:"｢恋の約束｣", s:2, hp:2200, atk:650, sid:"shou_s2", desc: "待機に出た時ATKアップ"},
-    {t:"｢3分ちょい！2023ver.｣", s:3, hp:3500, atk:950, sid:"shou_s3", desc:"ドロー数増加"},
-    {t:"｢星降るフェアリーテイル｣", s:3, hp:3900, atk:900, sid:"shou_s3_2", desc: "ダメージ時反射"}
+    {t:"｢恋の約束｣", s:2, hp:2200, atk:650, sid:"shou_s2", desc: "待機に出たターンのみ攻撃UP\n(Lv50:+500 / MAX:+700)"},
+    {t:"｢推しが見つかる3分ちょい！2023ver.｣", s:3, hp:3500, atk:950, sid:"shou_s3", desc:"ドロー数増加\n(Lv50:確定 / MAX:待機中も有効)"},
+    {t:"｢星降るフェアリーテイル｣", s:3, hp:3900, atk:900, sid:"shou_s3_2", desc: "ダメージを受けた時相手に反射\n(Lv50:500 / MAX:1000)"}
   ],
-  "ないこ": [
+"ないこ": [
     {t:"｢いれいす｣", s:1, hp:1200, atk:400, sid:"none", desc:""},
-    {t:"｢恋の約束｣", s:2, hp:2300, atk:550, sid:"naiko_s2", desc:"毒ダメージ付与"},
-    {t:"｢3分ちょい！2023ver.｣", s:3, hp:3600, atk:850, sid:"naiko_s3", desc:"相手の手札を捨てる"},
-    {t:"｢星降るフェアリーテイル｣", s:3, hp:4000, atk:800, sid:"naiko_s3_2", desc: "敵スキル制限"}
+    {t:"｢恋の約束｣", s:2, hp:2300, atk:550, sid:"naiko_s2", desc:"攻撃した敵に毒付与\n(毎ドロー時最大100ダメ)"},
+    {t:"｢推しが見つかる3分ちょい！2023ver.｣", s:3, hp:3600, atk:850, sid:"naiko_s3", desc:"条件を満たすと相手の手札を\n選んで捨てさせる"},
+    {t:"｢星降るフェアリーテイル｣", s:3, hp:4000, atk:800, sid:"naiko_s3_2", desc: "バトルゾーンで長押し発動\n敵の待機スキルの禁止"}
   ],
   "If": [
     {t:"｢いれいす｣", s:1, hp:1100, atk:420, sid:"none", desc:""},
     {t:"｢恋の約束｣", s:2, hp:2100, atk:620, sid:"if_s2", desc:"出した時味方回復"},
-    {t:"｢3分ちょい！2023ver.｣", s:3, hp:3500, atk:920, sid:"if_s3", desc: "山札操作"},
+    {t:"｢推しが見つかる3分ちょい！2023ver.｣", s:3, hp:3500, atk:920, sid:"if_s3", desc: "山札操作"},
     {t:"｢星降るフェアリーテイル｣", s:3, hp:3900, atk:870, sid:"if_s3_2", desc: "スキルコピー"}
   ],
   "悠佑": [
     {t:"｢いれいす｣", s:1, hp:1400, atk:450, sid:"none", desc:""},
     {t:"｢恋の約束｣", s:2, hp:2600, atk:650, sid:"yusuke_s2", desc:"被ダメ軽減"},
-    {t:"｢3分ちょい！2023ver.｣", s:3, hp:4200, atk:1000, sid:"yusuke_s3", desc:"味方ATK強化"},
+    {t:"｢推しが見つかる3分ちょい！2023ver.｣", s:3, hp:4200, atk:1000, sid:"yusuke_s3", desc:"味方ATK強化"},
     {t:"｢星降るフェアリーテイル｣", s:3, hp:4800, atk:950, sid:"yusuke_s3_2", desc: "身代わり"}
   ],
   "Coe.": [
@@ -176,11 +185,11 @@ const cardMaster = {
     {t:"｢すたぽら｣", s:1, hp:1250, atk:420, sid:"none", desc:""},
     {t:"｢First Star｣", s:2, hp:2250, atk:620, sid:"kotaro_s2", desc:"死亡時ライフダメ"},
     {t:"｢おぎゃりたい！｣", s:3, hp:3600, atk:920, sid:"kotaro_s3", desc: "ドロー選別"},
-    {t:"｢ヒーロー大作戦｣", s:3, hp:3900, atk:870, sid:"kotaro_s3_2", desc: "スプラッシュ"}
+    {t:"｢ヒーロー大作戦｣", s:3, hp:3700, atk:870, sid:"kotaro_s3_2", desc: "スプラッシュ"}
   ]
 };
 
-// ゲーム変数
+// --- ゲーム変数 ---
 let money = 999999, notes = 99999, keys = 0;
 let stock = [], deck = [];
 let currentUpCard = null, pressTimer;
@@ -202,20 +211,25 @@ function showScreen(id) {
   if(id==='stock') showStock();
 }
 
-// --- カード生成 ---
 function createCard(minStar = 1) {
   const names = Object.keys(cardMaster);
   const name = names[Math.floor(Math.random() * names.length)];
-  const variants = cardMaster[name];
+  const variations = cardMaster[name];
   let star = (minStar === 2) ? (Math.random() < 0.2 ? 3 : 2) : (Math.random() < 0.1 ? 3 : (Math.random() < 0.4 ? 2 : 1));
-  const v = variants.find(x => x.s == star) || variants[0];
-  return { id: Math.random().toString(36).substr(2, 9), name, title: v.t, stars: v.s, level: 1, hp: v.hp, maxHp: v.hp, atk: v.atk, sid: v.sid, desc: v.desc };
+  const v = variations.find(x => x.s == star) || variations[0];
+  return { 
+    id: Math.random().toString(36).substr(2, 9), 
+    name, title: v.t, stars: v.s, level: 1, 
+    hp: v.hp, maxHp: v.hp, atk: v.atk, sid: v.sid, desc: v.desc,
+    hasTriggered: false // スキル1度きり判定用
+  };
 }
 
 function cardHTML(c, type) {
   let cls = `card star${c.stars}`;
   if(type === 'battle' && attackingId === c.id) cls += " attacking";
   if(type === 'enemy' && attackingId) cls += " targetable";
+
   return `
     <div class="${cls}" onclick="cardClick('${c.id}', '${type}')" 
          onmousedown="startPress('${c.id}')" onmouseup="endPress()" onmouseleave="endPress()"
@@ -234,115 +248,270 @@ function cardHTML(c, type) {
     </div>`;
 }
 
-// --- スキルエンジン ---
+// --- スキル処理エンジン ---
 function triggerSkill(timing, card, context = {}) {
   if (!card || card.sid === "none") return;
   const lv = card.level;
+
   switch(card.sid) {
-    case "riura_s2": 
-      if (timing === "onEnemyDraw") {
-        let dmg = (lv >= 100) ? 100 : (lv >= 50 ? 50 : 10);
-        eLife -= dmg; alert("りうらスキル: BOTに" + dmg + "ダメージ！");
+
+case "naiko_s2": // 恋の約束（攻撃時に相手にフラグを立てる処理はexecuteAttackで行います）
+      break;
+
+    case "naiko_s3": // 推しが見つかる3分ちょい！（ターン管理はpassTurnで行います）
+      if (timing === "onDiscardGame") {
+        startDiscardMiniGame(card);
       }
       break;
-    case "hotoke_s2":
+
+    case "naiko_s3_2": // 星降るフェアリーテイル
+      if (timing === "onLongPress" && bZone.some(c => c.id === card.id)) {
+        activateSilenceMode(card);
+      }
+      break;
+
+case "shou_s2": // ｢恋の約束｣
+      if (timing === "onBench" || timing === "onPlay") {
+        let buff = (lv >= 100) ? 700 : (lv >= 50 ? 500 : 300);
+        card.tempAtkBuff = buff; // そのターンのみのバフ
+        alert("初兎のスキル！このターンのみ攻撃力+" + buff);
+      }
+      break;
+
+    case "shou_s3_2": // ｢星降るフェアリーテイル｣
+      if (timing === "onDamage") {
+        let reflect = (lv >= 100) ? 1000 : (lv >= 50 ? 500 : 300);
+        eLife -= reflect;
+        alert("初兎のスキル！ダメージを反射してBOTに" + reflect + "ダメージ！");
+      }
+      break;
+
+case "hotoke_s2": // ｢恋の約束｣
       if (timing === "onPlay") {
         let count = (lv >= 100) ? 3 : (lv >= 50 ? 2 : 1);
         for(let i=0; i<count; i++) if(bDeck.length > 0) bHand.push(bDeck.pop());
-        alert("hotokeスキル: " + count + "枚ドロー！");
+        alert("-hotoke-のスキル！カードを" + count + "枚追加で引いた！");
       }
       break;
-    case "hotoke_s3":
-      if (timing === "onTurnStart" && (bZone.some(c=>c.id==card.id))) {
+
+    case "hotoke_s3": // ｢推しが見つかる3分ちょい！2023ver.｣
+      if (timing === "onTurnStart" && bZone.some(c => c.id === card.id)) {
         let heal = (lv >= 100) ? 200 : (lv >= 50 ? 100 : 50);
         pLife += heal;
+        alert("-hotoke-のスキル！自分のライフを" + heal + "回復！");
       }
       break;
-    case "if_s2":
-      if (timing === "onPlay") {
-        let heal = (lv >= 100) ? 9999 : (lv >= 50 ? 500 : 200);
-        bZone.forEach(c => c.hp = Math.min(c.maxHp, c.hp + heal));
-        alert("Ifスキル: 味方を回復！");
+
+    case "hotoke_s3_2": // ｢星降るフェアリーテイル｣
+      if (timing === "onTurnStart" && bBench.some(c => c.id === card.id)) {
+        if (bZone.length === 2 && bZone[0].title === bZone[1].title) {
+          let buff = (lv >= 100) ? 1500 : (lv >= 50 ? 1000 : 500);
+          bZone[0].hp += buff;
+          bZone[0].maxHp += buff;
+          bZone[1].hp += buff;
+          bZone[1].maxHp += buff;
+          alert("-hotoke-のスキル！前衛2人の防御力(HP)を" + buff + "強化した！");
+        }
       }
       break;
-    case "coe_s2":
-      if (timing === "onBench") {
-        let heal = (lv >= 100) ? 200 : (lv >= 50 ? 150 : 100);
-        bZone.forEach(c => c.hp = Math.min(c.maxHp, c.hp + heal));
-        alert("Coe.スキル: 前線を回復！");
+
+    case "riura_s2": // りうら星2: 相手ドロー時
+      if (timing === "onEnemyDraw") {
+        let dmg = (lv >= 100) ? 100 : (lv >= 50 ? 50 : 10);
+        eLife -= dmg;
+        alert("りうらのスキル発動！BOTライフに" + dmg + "ダメージ！");
       }
       break;
-    case "kotaro_s2":
-      if (timing === "onDeath") {
-        let dmg = (lv >= 100) ? 300 : (lv >= 50 ? 200 : 100);
-        eLife -= dmg; alert("こったろスキル: 散り際にダメージ！");
-      }
-      break;
-    case "kuni_s2":
-      if (timing === "onPlayerDraw") {
-        let dmg = (lv >= 100) ? 150 : (lv >= 50 ? 100 : 50);
-        if(eZone.length>0) eZone[0].hp -= dmg;
-        alert("くにスキル: ドロー反撃！");
+
+    case "riura_s3_2": // りうら星3(星降る): ゾーン登場時
+      if ((timing === "onPlay" || timing === "onMoveToBattle") && !card.hasTriggered) {
+        let isBattle = bZone.some(c => c.id === card.id);
+        let dmg = 0;
+        if (isBattle) {
+           dmg = (lv >= 100) ? 800 : (lv >= 50 ? 500 : 300);
+        } else {
+           dmg = (lv >= 100) ? 500 : (lv >= 50 ? 300 : 100);
+        }
+        if (eZone.length > 0) {
+          eZone[0].hp -= dmg;
+          alert("りうらのスキル発動！敵のHPを" + dmg + "減少させた！");
+          if(eZone[0].hp <= 0) {
+             eLife -= Math.abs(eZone[0].hp);
+             eZone.shift();
+             refillEnemy();
+          }
+        }
+        card.hasTriggered = true; // 1度きり
       }
       break;
   }
+}
+
+// 攻撃力計算（りうら星3 補正含む）
+function getActualAtk(card) {
+  let baseAtk = card.atk + (card.level * 20);
+  
+  // りうら星3「3分ちょい」補正
+  if (card.sid === "riura_s3") {
+    // 自分以外のバトルゾーンに、同じタイトル（3分ちょい）のカードがいるか
+    let hasPartner = bZone.some(c => c.id !== card.id && c.title === card.title);
+    if (hasPartner) {
+      let bonus = (card.level >= 100) ? 1000 : (card.level >= 50 ? 500 : 300);
+      baseAtk += bonus;
+    }
+  }
+  return baseAtk;
 }
 
 // --- 攻撃ロジック ---
 function executeAttack(atkId, targetId) {
   let atkCard = bZone.find(x => x.id == atkId);
-  let baseAtk = atkCard.atk + (atkCard.level * 20);
-  if(atkCard.sid === "riura_s3") {
-     let bonus = (atkCard.level >= 100) ? 1000 : (atkCard.level >= 50 ? 500 : 300);
-     if(bZone.some(c => c.id !== atkCard.id && c.name === atkCard.name)) baseAtk += bonus;
-  }
-
+  let finalAtk = getActualAtk(atkCard);
+  
   if (targetId === 'direct') {
-    eLife -= baseAtk; alert("ダイレクトアタック！ " + baseAtk);
+    eLife -= finalAtk;
+    alert("ダイレクトアタック！ " + finalAtk + "ダメージ！");
   } else {
     let target = eZone.find(x => x.id == targetId);
-    let excess = baseAtk - target.hp;
-    target.hp -= baseAtk;
-    alert(atkCard.name + "の攻撃！ " + baseAtk);
+    let excess = finalAtk - target.hp;
+    target.hp -= finalAtk;
+    alert(atkCard.name + "の攻撃！ " + finalAtk + "ダメージ！");
+
+// 【ないこ星2：毒効果】
+    if (atkCard.sid === "naiko_s2" && targetCard) {
+      let poisonDmg = (atkCard.level >= 100) ? 100 : (atkCard.level >= 50 ? 80 : 50);
+      targetCard.poisonInfo = { damage: poisonDmg, attackerId: atkCard.id };
+      alert(targetCard.name + "に毒を付与した！");
+    }
+
     if (target.hp <= 0) {
+      alert(target.name + "を撃破！");
       eZone.splice(eZone.findIndex(x => x.id == targetId), 1);
-      if (excess > 0) { eLife -= excess; alert("貫通ダメージ！"); }
+      if (excess > 0) {
+        eLife -= excess;
+        alert("貫通！ BOTにさらに" + Math.floor(excess) + "ダメージ！");
+      }
       refillEnemy();
     }
   }
-  attackingId = null; hasAttacked = true; updateBattleUI(); checkBattleEnd();
+  
+  attackingId = null;
+  hasAttacked = true;
+  updateBattleUI();
+  checkBattleEnd();
 }
 
-function selectTarget(type) { if (type === 'direct' && attackingId && eZone.length === 0) executeAttack(attackingId, 'direct'); }
+function selectTarget(type) {
+  if (type === 'direct' && attackingId && eZone.length === 0) {
+    executeAttack(attackingId, 'direct');
+  }
+}
 
+// --- バトル進行（BOTの攻撃から自分のドローまで） ---
 function passTurn() {
   refillEnemy();
+  // 1. BOTの攻撃処理
   if (eZone.length > 0) {
     let bAtk = eZone[Math.floor(Math.random()*eZone.length)];
     let dmg = bAtk.atk + (bAtk.level * 15);
     if (bZone.length > 0) {
       let target = bZone[0];
       let excess = dmg - target.hp;
+      
+      // 【初兎：星降る】ダメージを受けた時の反射スキル判定
+      if (target.sid === "shou_s3_2") {
+        triggerSkill("onDamage", target);
+      }
+
       target.hp -= dmg;
+      alert("敵の" + bAtk.name + "の攻撃！ " + Math.floor(dmg) + "ダメージ！");
       if (target.hp <= 0) {
-        triggerSkill("onDeath", target);
+        alert(target.name + "が倒された…");
+        triggerSkill("onDeath", target); // 死亡時スキル判定
         bZone.shift();
         if (excess > 0) pLife -= excess;
       }
-    } else { pLife -= dmg; }
+    } else {
+      pLife -= dmg;
+      alert("敵のダイレクトアタック！ " + Math.floor(dmg) + "ダメージ！");
+    }
   }
+
+  // 2. 勝敗チェック
   checkBattleEnd();
-  let drawCount = 1;
-  bZone.concat(bBench).forEach(c => { if(c.sid === "shou_s3") { if(bZone.some(x=>x.id==c.id) || c.level >= 50) drawCount++; if(c.level >= 100 && Math.random() < 0.5) drawCount++; } });
-  for(let i=0; i<drawCount; i++) if (bDeck.length > 0) { let dc = bDeck.pop(); bHand.push(dc); bZone.concat(bBench).forEach(c => triggerSkill("onPlayerDraw", c)); }
-  bZone.concat(bBench).forEach(c => { triggerSkill("onTurnStart", c); triggerSkill("onEnemyDraw", c); });
-  hasAttacked = false; attackingId = null; updateBattleUI();
+
+  // 3. 自分のターン開始：ドロー枚数の計算
+  // 【初兎：推しが見つかる3分ちょい！】
+  let drawCount = 1; // 基本は1枚
+  bZone.concat(bBench).forEach(c => {
+    if(c.sid === "shou_s3") {
+       let isBattle = bZone.some(x => x.id == c.id);
+       let lv = c.level;
+       if(lv >= 100) { 
+         drawCount++; // 最大：どこでも確定+1
+       } else if(lv >= 50) { 
+         if(isBattle) drawCount++; // 50：バトルゾーンなら確定+1
+       } else {
+         if(isBattle && Math.random() < 0.5) drawCount++; // 通常：バトルゾーンなら1/2で+1
+       }
+    }
+  });
+
+  // 4. 計算した枚数分ドローする
+  for(let i=0; i<drawCount; i++) {
+    if (bDeck.length > 0) {
+      let dc = bDeck.pop();
+      bHand.push(dc);
+      // ドローに反応するスキル（くに等）を起動
+      bZone.concat(bBench).forEach(cardObj => triggerSkill("onPlayerDraw", cardObj));
+    }
+  }
+
+  // 5. ターン開始時のスキル発動（りうら、-hotoke-等）
+  bZone.concat(bBench).forEach(c => {
+    triggerSkill("onTurnStart", c);
+    triggerSkill("onEnemyDraw", c); 
+  });
+
+  // 6. 【初兎：恋の約束】一時的な攻撃バフをリセット（そのターンのみのため）
+  bZone.concat(bBench).concat(bHand).forEach(c => {
+    c.tempAtkBuff = 0;
+  });
+
+  hasAttacked = false;
+  attackingId = null;
+  alert("自分のターン！");
+  updateBattleUI();
 }
 
-function checkBattleEnd() { if (eLife <= 0 || (eZone.length === 0 && eBench.length === 0 && eDeck.length === 0)) finishBattle("WIN"); else if (pLife <= 0 || (bZone.length === 0 && bBench.length === 0 && bDeck.length === 0)) finishBattle("LOSE"); }
-function refillEnemy() { while (eZone.length < 2 && eBench.length > 0) eZone.push(eBench.shift()); while (eBench.length < 3 && eDeck.length > 0) eBench.push(eDeck.pop()); }
+  
+  // 自分ターン開始: ドロー
+  if (bDeck.length > 0) bHand.push(bDeck.pop());
+  
+  // ターン開始時スキル（りうら星2 等）
+  bZone.concat(bBench).forEach(c => {
+    triggerSkill("onEnemyDraw", c); 
+  });
+
+  hasAttacked = false;
+  attackingId = null;
+  alert("自分のターン！");
+  updateBattleUI();
+}
+
+function checkBattleEnd() {
+  if (eLife <= 0 || (eZone.length === 0 && eBench.length === 0 && eDeck.length === 0)) finishBattle("WIN");
+  else if (pLife <= 0 || (bZone.length === 0 && bBench.length === 0 && bDeck.length === 0)) finishBattle("LOSE");
+}
+
+function refillEnemy() {
+  while (eZone.length < 2 && eBench.length > 0) eZone.push(eBench.shift());
+  while (eBench.length < 3 && eDeck.length > 0) eBench.push(eDeck.pop());
+}
+
 function updateBattleUI() {
-  document.getElementById("eLife").innerText = eLife; document.getElementById("pLife").innerText = pLife;
+  document.getElementById("eLife").innerText = Math.floor(eLife);
+  document.getElementById("pLife").innerText = Math.floor(pLife);
   document.getElementById("directMark").style.display = (attackingId && eZone.length === 0) ? "inline" : "none";
   document.getElementById("hand").innerHTML = bHand.map(c => cardHTML(c, 'hand')).join("");
   document.getElementById("battleZone").innerHTML = bZone.map(c => cardHTML(c, 'battle')).join("");
@@ -351,13 +520,11 @@ function updateBattleUI() {
   document.getElementById("enemyBenchZone").innerHTML = eBench.map(c => cardHTML(c, 'none')).join("");
 }
 
-// --- 強化・ガチャ・ミニゲーム ---
-function startPress(id) { pressTimer = setTimeout(() => { let c = stock.find(x => x.id == id) || deck.find(x => x.id == id) || bHand?.find(x => x.id == id); if (c) { currentUpCard = c; showScreen('upgrade'); updateUpgradeUI(); } }, 600); }
-function endPress() { clearTimeout(pressTimer); }
+// --- 強化 ---
 function updateUpgradeUI() {
   document.getElementById("upgradeCard").innerHTML = cardHTML(currentUpCard, 'none');
   let cC = currentUpCard.level * 30 + 50, cN = Math.floor(currentUpCard.level / 2) + 5;
-  document.getElementById("upgradeCost").innerText = `Lv.${currentUpCard.level} → Lv.${currentUpCard.level+1}\n必要: 💰${cC} / 🎶${cN}`;
+  document.getElementById("upgradeCost").innerText = `Lv.${currentUpCard.level} → Lv.${currentUpCard.level+1}\n必要素材: 💰${cC} / 🎶${cN}`;
   document.getElementById("upBtn").disabled = currentUpCard.level >= 100;
 }
 function levelUp() {
@@ -365,17 +532,26 @@ function levelUp() {
   let cC = currentUpCard.level * 30 + 50, cN = Math.floor(currentUpCard.level / 2) + 5;
   if (money < cC || notes < cN) return alert("素材不足");
   money -= cC; notes -= cN; currentUpCard.level++;
-  currentUpCard.maxHp += 400; currentUpCard.hp = currentUpCard.maxHp; currentUpCard.atk += 60;
+  currentUpCard.maxHp += 400; currentUpCard.hp = currentUpCard.maxHp;
+  currentUpCard.atk += 60;
   updateStatus(); updateUpgradeUI();
 }
+
+// --- 基本機能 ---
+function startPress(id) { pressTimer = setTimeout(() => { let c = stock.find(x => x.id == id) || deck.find(x => x.id == id) || bHand?.find(x => x.id == id) || bBench?.find(x => x.id == id); if (c) { 
+   // ないこ星3_2のバトル中の長押し判定
+      if (bZone.some(bc => bc.id === c.id) && c.sid === "naiko_s3_2") {
+        triggerSkill("onLongPress", c);
+        return; // 強化画面には行かない
+      }
+currentUpCard = c; showScreen('upgrade'); updateUpgradeUI(); } }, 600); }
+function endPress() { clearTimeout(pressTimer); }
 function drawCard() { if (money < 100) return; money -= 100; updateStatus(); let c = createCard(); stock.push(c); document.getElementById("drawResult").innerHTML = cardHTML(c, 'none'); }
 function draw10() { if (money < 900) return; money -= 900; updateStatus(); let h = ""; for (let i = 0; i < 10; i++) { let c = createCard(); stock.push(c); h += cardHTML(c, 'none'); } document.getElementById("drawResult").innerHTML = h; }
-function playMinigame() {
-  const btn = document.getElementById("mg-btn");
-  if (!mgActive) { if (money < 50) return; money -= 50; updateStatus(); mgActive = true; btn.innerText = "ストップ！"; animateBar(); }
-  else { mgActive = false; cancelAnimationFrame(mgReq); let dist = Math.abs(mgPos - 142.5); let rew = (dist < 15) ? 100 : (dist < 40) ? 40 : 10; notes += rew; updateStatus(); btn.innerText = "リトライ"; alert("音符+" + rew); }
-}
+function playMinigame() { const btn = document.getElementById("mg-btn"); if (!mgActive) { if (money < 50) return; money -= 50; updateStatus(); mgActive = true; btn.innerText = "ストップ！"; animateBar(); } else { mgActive = false; cancelAnimationFrame(mgReq); let dist = Math.abs(mgPos - 142.5); let rew = (dist < 15) ? 100 : (dist < 40) ? 40 : 10; notes += rew; updateStatus(); btn.innerText = "リトライ"; alert("音符+" + rew); } }
 function animateBar() { if (!mgActive) return; mgPos += mgDir; if (mgPos >= 285 || mgPos <= 0) mgDir *= -1; document.getElementById("mg-bar").style.left = mgPos + "px"; mgReq = requestAnimationFrame(animateBar); }
+function openChest() { money += 2000; updateStatus(); alert("2000コイン獲得"); }
+function drawNoteGacha() { if (notes < 20) return; notes -= 20; updateStatus(); if (Math.random() < 0.7) { let win = Math.floor(Math.random() * 701) + 300; money += win; alert(win + "獲得"); } else { let c = createCard(2); stock.push(c); alert("レア！ " + c.name); } }
 function startBattle(d) {
   if (deck.length < 20) return alert("20枚必要");
   currentDiff = d; pLife = 5000; eLife = 5000; bZone = []; bBench = []; eZone = []; eBench = []; bHand = []; hasAttacked = false; attackingId = null;
@@ -387,25 +563,69 @@ function startBattle(d) {
   for(let i=0; i<3; i++) if(eDeck.length>0) eBench.push(eDeck.pop());
   showScreen('battle'); updateBattleUI();
 }
-function finishBattle(res) { let rew = currentDiff === 'easy' ? 1000 : 3000; if (res === "WIN") { money += rew; alert("勝利！報酬:" + rew); } else alert("敗北…"); updateStatus(); showScreen('battleSelect'); }
+function finishBattle(res) { let rew = currentDiff === 'easy' ? 1000 : 3000; if (res === "WIN") { money += rew; alert("勝利！"); } else alert("敗北…"); updateStatus(); showScreen('battleSelect'); }
 function showStock() { document.getElementById("deckCount").innerText = deck.length; document.getElementById("deckArea").innerHTML = deck.map(c => cardHTML(c, 'deck')).join(""); document.getElementById("stockList").innerHTML = stock.map(c => cardHTML(c, 'stock')).join(""); }
 function cardClick(id, type) {
   if (type === 'stock') { let t = stock.find(c => c.id == id); if (deck.length >= 20 || deck.some(c => c.name === t.name && c.title === t.title)) return; deck.push(stock.splice(stock.findIndex(c => c.id == id), 1)[0]); showStock(); }
   else if (type === 'deck') { stock.push(deck.splice(deck.findIndex(c => c.id == id), 1)[0]); showStock(); }
   else if (type === 'hand') { selCardId = id; let c = bHand.find(x => x.id == id); document.getElementById("selName").innerText = c.title + c.name; document.getElementById("actionPanel").style.display = "block"; }
-  else if (type === 'bench') { if (bZone.length < 2) { bZone.push(bBench.splice(bBench.findIndex(x => x.id == id), 1)[0]); updateBattleUI(); } }
+  else if (type === 'bench') { if (bZone.length < 2) { 
+      let c = bBench.splice(bBench.findIndex(x => x.id == id), 1)[0]; 
+      bZone.push(c); 
+      triggerSkill("onMoveToBattle", c);
+      updateBattleUI(); 
+  } }
   else if (type === 'battle') { if (hasAttacked) return; attackingId = (attackingId === id) ? null : id; updateBattleUI(); }
   else if (type === 'enemy' && attackingId) { executeAttack(attackingId, id); }
 }
 function confirmPlay(t) {
   let idx = bHand.findIndex(x => x.id == selCardId); let c = bHand.splice(idx, 1)[0];
   if (t === 'battle' && bZone.length < 2) { bZone.push(c); triggerSkill("onPlay", c); }
-  else if (t === 'bench' && bBench.length < 3) { bBench.push(c); triggerSkill("onBench", c); }
+  else if (t === 'bench' && bBench.length < 3) { bBench.push(c); triggerSkill("onPlay", c); }
   else { bHand.push(c); }
   document.getElementById("actionPanel").style.display = "none"; updateBattleUI();
 }
 function cancelPlay() { document.getElementById("actionPanel").style.display = "none"; }
-function openChest() { money += 2000; updateStatus(); alert("2000枚獲得"); }
 </script>
+
+// --- ないこ星3：手札破壊ミニゲーム ---
+function startDiscardMiniGame(naikoCard) {
+  if (eDeck.length === 0) return;
+  alert("ないこのスキル：手札破壊発動！");
+  // 3枚の裏返しカードを表示するシミュレーション
+  let choice = prompt("相手の手札が3枚あります。どれを捨てさせますか？\n1番 / 2番 / 3番 (数字で入力)");
+  if (eDeck.length > 0) {
+    let discarded = eDeck.splice(Math.floor(Math.random() * eDeck.length), 1)[0];
+    alert("相手の「" + discarded.title + discarded.name + "」を墓地へ送った！");
+  }
+}
+
+// --- ないこ星3_2：封印モード ---
+let isSilenceMode = false;
+let silencerNaikoId = null;
+
+function activateSilenceMode(card) {
+  isSilenceMode = true;
+  silencerNaikoId = card.id;
+  let limit = (card.level >= 100) ? 3 : (card.level >= 50 ? 2 : 1);
+  card.silenceLimit = limit;
+  card.silencedIds = card.silencedIds || [];
+  alert("封印モード起動！相手の待機ゾーンのキャラを" + limit + "体まで選んでタップしてください。");
+  updateBattleUI();
+}
+
+// cardClick関数の enemy の処理部分に以下を追記
+// else if (type === 'enemy' && isSilenceMode) {
+//   let naiko = bZone.find(c => c.id === silencerNaikoId);
+//   if (naiko && naiko.silencedIds.length < naiko.silenceLimit) {
+//      let target = eBench.find(x => x.id == id);
+//      if (target) {
+//        target.isSilenced = true;
+//        naiko.silencedIds.push(target.id);
+//        alert(target.name + "のスキルを封印した！");
+//        isSilenceMode = false; updateBattleUI();
+//      }
+//   }
+// }
 </body>
 </html>
